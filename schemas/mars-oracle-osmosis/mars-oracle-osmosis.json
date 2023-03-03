@@ -8,36 +8,24 @@
     "type": "object",
     "required": [
       "base_denom",
-      "owner"
+      "owner",
+      "pyth_contract_addr"
     ],
     "properties": {
       "base_denom": {
         "description": "The asset in which prices are denominated in",
         "type": "string"
       },
-      "custom_init": {
-        "description": "Custom init params",
-        "anyOf": [
-          {
-            "$ref": "#/definitions/Empty"
-          },
-          {
-            "type": "null"
-          }
-        ]
-      },
       "owner": {
         "description": "The contract's owner, who can update config and price sources",
         "type": "string"
+      },
+      "pyth_contract_addr": {
+        "description": "Contract address of Pyth",
+        "type": "string"
       }
     },
-    "additionalProperties": false,
-    "definitions": {
-      "Empty": {
-        "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
-        "type": "object"
-      }
-    }
+    "additionalProperties": false
   },
   "execute": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -105,14 +93,29 @@
         "additionalProperties": false
       },
       {
-        "description": "Custom messages defined by the contract",
+        "description": "Update contract config (only callable by owner)",
         "type": "object",
         "required": [
-          "custom"
+          "update_config"
         ],
         "properties": {
-          "custom": {
-            "$ref": "#/definitions/Empty"
+          "update_config": {
+            "type": "object",
+            "properties": {
+              "base_denom": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "pyth_contract_addr": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false
@@ -177,9 +180,8 @@
           }
         }
       },
-      "Empty": {
-        "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
-        "type": "object"
+      "Identifier": {
+        "type": "string"
       },
       "OsmosisPriceSource": {
         "oneOf": [
@@ -378,6 +380,56 @@
               }
             },
             "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "pyth"
+            ],
+            "properties": {
+              "pyth": {
+                "type": "object",
+                "required": [
+                  "max_confidence",
+                  "max_deviation",
+                  "max_staleness",
+                  "price_feed_id"
+                ],
+                "properties": {
+                  "max_confidence": {
+                    "description": "The maximum confidence deviation allowed for an oracle price.\n\nThe confidence is measured as the percent of the confidence interval value provided by the oracle as compared to the weighted average value of the price.",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Decimal"
+                      }
+                    ]
+                  },
+                  "max_deviation": {
+                    "description": "The maximum deviation (percentage) between current and EMA price",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Decimal"
+                      }
+                    ]
+                  },
+                  "max_staleness": {
+                    "description": "The maximum number of seconds since the last price was by an oracle, before rejecting the price as too stale",
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  },
+                  "price_feed_id": {
+                    "description": "Price feed id of an asset from the list: https://pyth.network/developers/price-feed-ids",
+                    "allOf": [
+                      {
+                        "$ref": "#/definitions/Identifier"
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "additionalProperties": false
           }
         ]
       },
@@ -562,7 +614,8 @@
       "title": "ConfigResponse",
       "type": "object",
       "required": [
-        "base_denom"
+        "base_denom",
+        "pyth_contract_addr"
       ],
       "properties": {
         "base_denom": {
@@ -582,6 +635,10 @@
             "string",
             "null"
           ]
+        },
+        "pyth_contract_addr": {
+          "description": "Contract address of Pyth",
+          "type": "string"
         }
       },
       "additionalProperties": false

@@ -2,6 +2,7 @@ use std::fmt::{Debug, Display};
 
 use cosmwasm_std::{CustomQuery, Decimal, Deps, Env};
 use cw_storage_plus::Map;
+use mars_oracle::PythConfig;
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -48,5 +49,6 @@ where
         denom: &str,
         base_denom: &str,
         price_sources: &Map<&str, Self>,
+        pyth_config: &PythConfig,
     ) -> ContractResult<Decimal>;
 }

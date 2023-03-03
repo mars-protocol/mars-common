@@ -12,16 +12,19 @@ use osmosis_std::types::osmosis::{
     gamm::v2::QuerySpotPriceResponse,
     twap::v1beta1::{ArithmeticTwapToNowResponse, GeometricTwapToNowResponse},
 };
+use pyth_sdk_cw::{PriceFeedResponse, PriceIdentifier};
 
 use crate::{
     oracle_querier::OracleQuerier,
     osmosis_querier::{OsmosisQuerier, PriceKey},
+    pyth_querier::PythQuerier,
 };
 
 pub struct MarsMockQuerier {
     base: MockQuerier<Empty>,
     oracle_querier: OracleQuerier,
     osmosis_querier: OsmosisQuerier,
+    pyth_querier: PythQuerier,
 }
 
 impl Querier for MarsMockQuerier {
@@ -46,6 +49,7 @@ impl MarsMockQuerier {
             base,
             oracle_querier: OracleQuerier::default(),
             osmosis_querier: OsmosisQuerier::default(),
+            pyth_querier: PythQuerier::default(),
         }
     }
 
@@ -117,6 +121,10 @@ impl MarsMockQuerier {
         );
     }
 
+    pub fn set_pyth_price(&mut self, id: PriceIdentifier, price: PriceFeedResponse) {
+        self.pyth_querier.prices.insert(id, price);
+    }
+
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
         match &request {
             QueryRequest::Wasm(WasmQuery::Smart {
@@ -129,6 +137,11 @@ impl MarsMockQuerier {
                 let parse_oracle_query: StdResult<oracle::QueryMsg> = from_binary(msg);
                 if let Ok(oracle_query) = parse_oracle_query {
                     return self.oracle_querier.handle_query(&contract_addr, oracle_query);
+                }
+
+                // Pyth Queries
+                if let Ok(pyth_query) = from_binary::<pyth_sdk_cw::QueryMsg>(msg) {
+                    return self.pyth_querier.handle_query(&contract_addr, pyth_query);
                 }
 
                 panic!("[mock]: Unsupported wasm query: {msg:?}");
