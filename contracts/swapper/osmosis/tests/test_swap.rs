@@ -65,7 +65,7 @@ fn swap_exact_in_slippage_too_high() {
 
     swap_to_create_twap_records(&app, &signer, pool_mars_osmo, coin(10u128, "umars"), "uosmo");
 
-    let route = OsmosisRoute(vec![SwapAmountInRoute {
+    let route = OsmosisRoute::from(vec![SwapAmountInRoute {
         pool_id: pool_mars_osmo,
         token_out_denom: "uosmo".to_string(),
     }]);
@@ -128,7 +128,7 @@ fn swap_exact_in_success() {
         &ExecuteMsg::SetRoute {
             denom_in: "umars".to_string(),
             denom_out: "uosmo".to_string(),
-            route: OsmosisRoute(vec![SwapAmountInRoute {
+            route: OsmosisRoute::from(vec![SwapAmountInRoute {
                 pool_id: pool_mars_osmo,
                 token_out_denom: "uosmo".to_string(),
             }]),

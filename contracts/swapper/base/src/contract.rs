@@ -1,8 +1,8 @@
 use std::marker::PhantomData;
 
 use cosmwasm_std::{
-    to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, CustomMsg, CustomQuery, Decimal, Deps,
-    DepsMut, Env, MessageInfo, Response, WasmMsg,
+    to_binary, Addr, BankMsg, Binary, Coin, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo,
+    Response, WasmMsg,
 };
 use cw_paginate::paginate_map;
 use cw_storage_plus::{Bound, Map};
@@ -12,50 +12,41 @@ use mars_swapper::msgs::{
     RoutesResponse,
 };
 
-use crate::{ContractError, ContractResult, Route};
+use crate::{ContractError, ContractResult, Route, RouteStep};
 
-pub struct SwapBase<'a, Q, M, R>
+pub struct SwapBase<'a, R, RS>
 where
-    Q: CustomQuery,
-    M: CustomMsg,
-    R: Route<M, Q>,
+    R: Route<RS>,
+    RS: RouteStep,
 {
     /// The contract's owner who has special rights to update contract
     pub owner: Owner<'a>,
     /// The trade route for each pair of input/output assets
     pub routes: Map<'a, (String, String), R>,
-    /// Phantom data holds generics
-    pub custom_query: PhantomData<Q>,
-    pub custom_message: PhantomData<M>,
+    /// Phantom data for the route step type
+    _route_step: PhantomData<RS>,
 }
 
-impl<'a, Q, M, R> Default for SwapBase<'a, Q, M, R>
+impl<'a, R, RS> Default for SwapBase<'a, R, RS>
 where
-    Q: CustomQuery,
-    M: CustomMsg,
-    R: Route<M, Q>,
+    R: Route<RS>,
+    RS: RouteStep,
 {
     fn default() -> Self {
         Self {
             owner: Owner::new("owner"),
             routes: Map::new("routes"),
-            custom_query: PhantomData,
-            custom_message: PhantomData,
+            _route_step: PhantomData,
         }
     }
 }
 
-impl<'a, Q, M, R> SwapBase<'a, Q, M, R>
+impl<'a, R, RS> SwapBase<'a, R, RS>
 where
-    Q: CustomQuery,
-    M: CustomMsg,
-    R: Route<M, Q>,
+    R: Route<RS>,
+    RS: RouteStep,
 {
-    pub fn instantiate(
-        &self,
-        deps: DepsMut<Q>,
-        msg: InstantiateMsg,
-    ) -> ContractResult<Response<M>> {
+    pub fn instantiate(&self, deps: DepsMut, msg: InstantiateMsg) -> ContractResult<Response> {
         self.owner.initialize(
             deps.storage,
             deps.api,
@@ -68,11 +59,11 @@ where
 
     pub fn execute(
         &self,
-        deps: DepsMut<Q>,
+        deps: DepsMut,
         env: Env,
         info: MessageInfo,
         msg: ExecuteMsg<R>,
-    ) -> ContractResult<Response<M>> {
+    ) -> ContractResult<Response> {
         match msg {
             ExecuteMsg::UpdateOwner(update) => self.update_owner(deps, info, update),
             ExecuteMsg::SetRoute {
@@ -93,7 +84,7 @@ where
         }
     }
 
-    pub fn query(&self, deps: Deps<Q>, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
+    pub fn query(&self, deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
         let res = match msg {
             QueryMsg::Owner {} => to_binary(&self.owner.query(deps.storage)?),
             QueryMsg::EstimateExactInSwap {
@@ -114,7 +105,7 @@ where
 
     fn query_route(
         &self,
-        deps: Deps<Q>,
+        deps: Deps,
         denom_in: String,
         denom_out: String,
     ) -> ContractResult<RouteResponse<R>> {
@@ -127,7 +118,7 @@ where
 
     fn query_routes(
         &self,
-        deps: Deps<Q>,
+        deps: Deps,
         start_after: Option<(String, String)>,
         limit: Option<u32>,
     ) -> ContractResult<RoutesResponse<R>> {
@@ -143,7 +134,7 @@ where
 
     fn estimate_exact_in_swap(
         &self,
-        deps: Deps<Q>,
+        deps: Deps,
         env: Env,
         coin_in: Coin,
         denom_out: String,
@@ -154,13 +145,13 @@ where
 
     fn swap_exact_in(
         &self,
-        deps: DepsMut<Q>,
+        deps: DepsMut,
         env: Env,
         info: MessageInfo,
         coin_in: Coin,
         denom_out: String,
         slippage: Decimal,
-    ) -> ContractResult<Response<M>> {
+    ) -> ContractResult<Response> {
         let swap_msg = self
             .routes
             .load(deps.storage, (coin_in.denom.clone(), denom_out.clone()))?
@@ -189,13 +180,13 @@ where
 
     fn transfer_result(
         &self,
-        deps: DepsMut<Q>,
+        deps: DepsMut,
         env: Env,
         info: MessageInfo,
         recipient: Addr,
         denom_in: String,
         denom_out: String,
-    ) -> ContractResult<Response<M>> {
+    ) -> ContractResult<Response> {
         // Internal callback only
         if info.sender != env.contract.address {
             return Err(ContractError::Unauthorized {
@@ -222,12 +213,12 @@ where
 
     fn set_route(
         &self,
-        deps: DepsMut<Q>,
+        deps: DepsMut,
         sender: Addr,
         denom_in: String,
         denom_out: String,
         route: R,
-    ) -> ContractResult<Response<M>> {
+    ) -> ContractResult<Response> {
         self.owner.assert_owner(deps.storage, &sender)?;
 
         route.validate(&deps.querier, &denom_in, &denom_out)?;
@@ -243,10 +234,10 @@ where
 
     fn update_owner(
         &self,
-        deps: DepsMut<Q>,
+        deps: DepsMut,
         info: MessageInfo,
         update: OwnerUpdate,
-    ) -> ContractResult<Response<M>> {
+    ) -> ContractResult<Response> {
         Ok(self.owner.update(deps, info, update)?)
     }
 }

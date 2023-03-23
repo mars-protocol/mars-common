@@ -27,7 +27,7 @@ fn only_owner_can_set_routes() {
             &ExecuteMsg::SetRoute {
                 denom_in: "mars".to_string(),
                 denom_out: "weth".to_string(),
-                route: OsmosisRoute(vec![
+                route: OsmosisRoute::from(vec![
                     SwapAmountInRoute {
                         pool_id: 1,
                         token_out_denom: "osmo".to_string(),
@@ -61,7 +61,7 @@ fn must_pass_at_least_one_step() {
             &ExecuteMsg::SetRoute {
                 denom_in: "mars".to_string(),
                 denom_out: "weth".to_string(),
-                route: OsmosisRoute(vec![]),
+                route: OsmosisRoute::from(vec![]),
             },
             &[],
             &signer,
@@ -91,7 +91,7 @@ fn must_be_available_in_osmosis() {
             &ExecuteMsg::SetRoute {
                 denom_in: "mars".to_string(),
                 denom_out: "weth".to_string(),
-                route: OsmosisRoute(vec![SwapAmountInRoute {
+                route: OsmosisRoute::from(vec![SwapAmountInRoute {
                     pool_id: 1,
                     token_out_denom: "osmo".to_string(),
                 }]),
@@ -133,7 +133,7 @@ fn step_does_not_contain_input_denom() {
             &ExecuteMsg::SetRoute {
                 denom_in: "umars".to_string(),
                 denom_out: "uweth".to_string(),
-                route: OsmosisRoute(vec![SwapAmountInRoute {
+                route: OsmosisRoute::from(vec![SwapAmountInRoute {
                     pool_id: pool_atom_osmo,
                     token_out_denom: "uosmo".to_string(),
                 }]),
@@ -146,7 +146,7 @@ fn step_does_not_contain_input_denom() {
     assert_err(
         res_err,
         ContractError::InvalidRoute {
-            reason: format!("step 1: pool {pool_atom_osmo} does not contain input denom umars",),
+            reason: format!("pool {pool_atom_osmo} does not contain input denom umars",),
         },
     );
 }
@@ -175,7 +175,7 @@ fn step_does_not_contain_output_denom() {
             &ExecuteMsg::SetRoute {
                 denom_in: "umars".to_string(),
                 denom_out: "uweth".to_string(),
-                route: OsmosisRoute(vec![SwapAmountInRoute {
+                route: OsmosisRoute::from(vec![SwapAmountInRoute {
                     pool_id: pool_mars_osmo,
                     token_out_denom: "uweth".to_string(),
                 }]),
@@ -188,7 +188,7 @@ fn step_does_not_contain_output_denom() {
     assert_err(
         res_err,
         ContractError::InvalidRoute {
-            reason: format!("step 1: pool {pool_mars_osmo} does not contain output denom uweth"),
+            reason: format!("pool {pool_mars_osmo} does not contain output denom uweth"),
         },
     );
 }
@@ -232,7 +232,7 @@ fn steps_do_not_loop() {
             &ExecuteMsg::SetRoute {
                 denom_in: "uatom".to_string(),
                 denom_out: "umars".to_string(),
-                route: OsmosisRoute(vec![
+                route: OsmosisRoute::from(vec![
                     SwapAmountInRoute {
                         pool_id: pool_atom_osmo,
                         token_out_denom: "uosmo".to_string(),
@@ -290,7 +290,7 @@ fn step_output_does_not_match() {
             &ExecuteMsg::SetRoute {
                 denom_in: "uatom".to_string(),
                 denom_out: "umars".to_string(),
-                route: OsmosisRoute(vec![SwapAmountInRoute {
+                route: OsmosisRoute::from(vec![SwapAmountInRoute {
                     pool_id: pool_atom_osmo,
                     token_out_denom: "uosmo".to_string(),
                 }]),
@@ -341,7 +341,7 @@ fn set_route_success() {
         &ExecuteMsg::SetRoute {
             denom_in: "umars".to_string(),
             denom_out: "uweth".to_string(),
-            route: OsmosisRoute(vec![
+            route: OsmosisRoute::from(vec![
                 SwapAmountInRoute {
                     pool_id: pool_mars_osmo,
                     token_out_denom: "uosmo".to_string(),
