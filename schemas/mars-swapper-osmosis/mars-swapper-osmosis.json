@@ -152,8 +152,11 @@
       "OsmosisRoute": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/SwapAmountInRoute"
+          "$ref": "#/definitions/OsmosisRouteStep"
         }
+      },
+      "OsmosisRouteStep": {
+        "$ref": "#/definitions/SwapAmountInRoute"
       },
       "OwnerUpdate": {
         "oneOf": [

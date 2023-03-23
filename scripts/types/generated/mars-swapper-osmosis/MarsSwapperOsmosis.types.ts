@@ -42,11 +42,11 @@ export type OwnerUpdate =
   | 'clear_proposed'
   | 'accept_proposed'
   | 'abolish_owner_role'
-export type OsmosisRoute = SwapAmountInRoute[]
+export type OsmosisRoute = OsmosisRouteStep[]
 export type Uint128 = string
 export type Decimal = string
 export type Addr = string
-export interface SwapAmountInRoute {
+export interface OsmosisRouteStep {
   pool_id: number
   token_out_denom: string
   [k: string]: unknown
