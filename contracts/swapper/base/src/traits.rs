@@ -9,7 +9,7 @@ use crate::{helpers::hashset, ContractError, ContractResult};
 
 pub trait RouteStep {
     /// Get the output denom of the route
-    fn ask_denom(&self) -> ContractResult<String>;
+    fn denom_out(&self) -> ContractResult<String>;
 
     /// Validate if the route step is valid
     fn validate(&self, querier: &QuerierWrapper, denom_in: &str) -> ContractResult<()>;
@@ -61,7 +61,7 @@ pub trait Route<RS: RouteStep>:
         let mut seen_denoms = hashset(&[denom_in.to_string()]);
         for (_i, step) in steps.iter().enumerate() {
             step.validate(querier, &prev_denom_out)?;
-            let ask_denom = step.ask_denom()?;
+            let ask_denom = step.denom_out()?;
 
             if seen_denoms.contains(&ask_denom) {
                 return Err(ContractError::InvalidRoute {

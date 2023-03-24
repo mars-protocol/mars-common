@@ -57,7 +57,7 @@ impl OsmosisRouteStep {
 }
 
 impl RouteStep for OsmosisRouteStep {
-    fn ask_denom(&self) -> ContractResult<String> {
+    fn denom_out(&self) -> ContractResult<String> {
         Ok(self.0.token_out_denom.clone())
     }
 
@@ -74,12 +74,12 @@ impl RouteStep for OsmosisRouteStep {
             });
         }
 
-        if !pool_denoms.contains(&self.ask_denom()?) {
+        if !pool_denoms.contains(&self.denom_out()?) {
             return Err(ContractError::InvalidRoute {
                 reason: format!(
                     "pool {} does not contain output denom {}",
                     self.0.pool_id,
-                    self.ask_denom()?,
+                    self.denom_out()?,
                 ),
             });
         }

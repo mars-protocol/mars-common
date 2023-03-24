@@ -66,7 +66,7 @@ impl AstroportRouteStep {
 }
 
 impl RouteStep for AstroportRouteStep {
-    fn ask_denom(&self) -> ContractResult<String> {
+    fn denom_out(&self) -> ContractResult<String> {
         Ok(self.denoms()?.1)
     }
 
