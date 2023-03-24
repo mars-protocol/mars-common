@@ -24,7 +24,8 @@ fn simulate_astroport_swap_operations(
         operations,
         offer_amount,
     };
-    Ok(querier.query_wasm_smart::<SimulateSwapOperationsResponse>(pair_addr, &msg)?.amount)
+    let res = querier.query_wasm_smart::<SimulateSwapOperationsResponse>(pair_addr, &msg)?;
+    Ok(res.amount)
 }
 
 #[cw_serde]
