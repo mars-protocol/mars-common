@@ -11,8 +11,9 @@ fn main() -> std::io::Result<()> {
     println!("Done");
 
     let contracts = vec![
-        "mars-swapper-osmosis",
+        "mars-oracle-osmosis",
         "mars-params",
+        "mars-swapper-osmosis",
     ];
 
     for contract in contracts {
