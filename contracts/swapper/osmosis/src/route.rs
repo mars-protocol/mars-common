@@ -1,106 +1,94 @@
-use std::fmt;
+use std::{fmt, str::FromStr};
 
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    BlockInfo, Coin, CosmosMsg, Decimal, Empty, Env, Fraction, QuerierWrapper, Uint128,
+    BlockInfo, Coin, CosmosMsg, Decimal, Env, Fraction, QuerierWrapper, StdResult, Uint128,
 };
-use mars_osmosis::helpers::{has_denom, query_arithmetic_twap_price, query_pool};
+use mars_osmosis::helpers::{query_arithmetic_twap_price, query_pool};
 use mars_swapper::msgs::EstimateExactInSwapResponse;
-use mars_swapper_base::{ContractError, ContractResult, Route};
+use mars_swapper_base::{ContractError, ContractResult, Route, RouteStep};
 use osmosis_std::types::osmosis::gamm::v1beta1::{MsgSwapExactAmountIn, SwapAmountInRoute};
-
-use crate::helpers::hashset;
 
 /// 10 min in seconds (Risk Team recommendation)
 const TWAP_WINDOW_SIZE_SECONDS: u64 = 600u64;
 
 #[cw_serde]
-pub struct OsmosisRoute(pub Vec<SwapAmountInRoute>);
+pub struct OsmosisRoute(pub Vec<OsmosisRouteStep>);
+
+impl From<Vec<SwapAmountInRoute>> for OsmosisRoute {
+    fn from(routes: Vec<SwapAmountInRoute>) -> Self {
+        Self(routes.into_iter().map(OsmosisRouteStep).collect())
+    }
+}
 
 impl fmt::Display for OsmosisRoute {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = self
             .0
             .iter()
-            .map(|step| format!("{}:{}", step.pool_id, step.token_out_denom))
+            .map(|step| format!("{}:{}", step.0.pool_id, step.0.token_out_denom))
             .collect::<Vec<_>>()
             .join("|");
         write!(f, "{s}")
     }
 }
 
-impl Route<Empty, Empty> for OsmosisRoute {
-    // Perform basic validation of the swap steps
-    fn validate(
-        &self,
-        querier: &QuerierWrapper,
-        denom_in: &str,
-        denom_out: &str,
-    ) -> ContractResult<()> {
-        let steps = &self.0;
+#[cw_serde]
+pub struct OsmosisRouteStep(pub SwapAmountInRoute);
 
-        // there must be at least one step
-        if steps.is_empty() {
+impl OsmosisRouteStep {
+    /// Get the liquidity of the pool
+    fn get_pool_liquidity(&self, querier: &QuerierWrapper) -> ContractResult<Vec<Coin>> {
+        let pool = query_pool(querier, self.0.pool_id)?;
+        Ok(pool
+            .pool_assets
+            .into_iter()
+            .flat_map(|asset| asset.token)
+            .map(|token| {
+                let amount = token.amount;
+                let denom = token.denom;
+                Ok(Coin {
+                    amount: Uint128::from_str(&amount)?,
+                    denom,
+                })
+            })
+            .collect::<StdResult<Vec<_>>>()?)
+    }
+}
+
+impl RouteStep for OsmosisRouteStep {
+    fn denom_out(&self) -> ContractResult<String> {
+        Ok(self.0.token_out_denom.clone())
+    }
+
+    fn validate(&self, querier: &QuerierWrapper, denom_in: &str) -> ContractResult<()> {
+        let pool_liquidity = self.get_pool_liquidity(querier)?;
+        let pool_denoms = pool_liquidity.into_iter().map(|c| c.denom).collect::<Vec<_>>();
+
+        if !pool_denoms.contains(&denom_in.to_string()) {
             return Err(ContractError::InvalidRoute {
-                reason: "the route must contain at least one step".to_string(),
+                reason: format!(
+                    "pool {} does not contain input denom {}",
+                    self.0.pool_id, denom_in,
+                ),
             });
         }
 
-        // for each step:
-        // - the pool must contain the input and output denoms
-        // - the output denom must not be the same as the input denom of a previous step (i.e. the route must not contain a loop)
-        let mut prev_denom_out = denom_in;
-        let mut seen_denoms = hashset(&[denom_in]);
-        for (i, step) in steps.iter().enumerate() {
-            let pool = query_pool(querier, step.pool_id)?;
-
-            if !has_denom(prev_denom_out, &pool.pool_assets) {
-                return Err(ContractError::InvalidRoute {
-                    reason: format!(
-                        "step {}: pool {} does not contain input denom {}",
-                        i + 1,
-                        step.pool_id,
-                        prev_denom_out
-                    ),
-                });
-            }
-
-            if !has_denom(&step.token_out_denom, &pool.pool_assets) {
-                return Err(ContractError::InvalidRoute {
-                    reason: format!(
-                        "step {}: pool {} does not contain output denom {}",
-                        i + 1,
-                        step.pool_id,
-                        &step.token_out_denom
-                    ),
-                });
-            }
-
-            if seen_denoms.contains(step.token_out_denom.as_str()) {
-                return Err(ContractError::InvalidRoute {
-                    reason: format!(
-                        "route contains a loop: denom {} seen twice",
-                        step.token_out_denom
-                    ),
-                });
-            }
-
-            prev_denom_out = &step.token_out_denom;
-            seen_denoms.insert(&step.token_out_denom);
-        }
-
-        // the route's final output denom must match the desired output denom
-        if prev_denom_out != denom_out {
+        if !pool_denoms.contains(&self.denom_out()?) {
             return Err(ContractError::InvalidRoute {
                 reason: format!(
-                    "the route's output denom {prev_denom_out} does not match the desired output {denom_out}",
+                    "pool {} does not contain output denom {}",
+                    self.0.pool_id,
+                    self.denom_out()?,
                 ),
             });
         }
 
         Ok(())
     }
+}
 
+impl Route<OsmosisRouteStep> for OsmosisRoute {
     /// Build a CosmosMsg that swaps given an input denom and amount
     fn build_exact_in_swap_msg(
         &self,
@@ -109,13 +97,13 @@ impl Route<Empty, Empty> for OsmosisRoute {
         coin_in: &Coin,
         slippage: Decimal,
     ) -> ContractResult<CosmosMsg> {
-        let steps = &self.0;
+        let steps = self.swap_routes();
 
         steps.first().ok_or(ContractError::InvalidRoute {
             reason: "the route must contain at least one step".to_string(),
         })?;
 
-        let out_amount = query_out_amount(querier, &env.block, coin_in, steps)?;
+        let out_amount = query_out_amount(querier, &env.block, coin_in, &steps)?;
         let min_out_amount = (Decimal::one() - slippage) * out_amount;
 
         let swap_msg: CosmosMsg = MsgSwapExactAmountIn {
@@ -137,10 +125,20 @@ impl Route<Empty, Empty> for OsmosisRoute {
         env: &Env,
         coin_in: &Coin,
     ) -> ContractResult<EstimateExactInSwapResponse> {
-        let out_amount = query_out_amount(querier, &env.block, coin_in, &self.0)?;
+        let out_amount = query_out_amount(querier, &env.block, coin_in, &self.swap_routes())?;
         Ok(EstimateExactInSwapResponse {
             amount: out_amount,
         })
+    }
+
+    fn steps(&self) -> &[OsmosisRouteStep] {
+        &self.0
+    }
+}
+
+impl OsmosisRoute {
+    pub fn swap_routes(&self) -> Vec<SwapAmountInRoute> {
+        self.0.iter().map(|step| step.0.clone()).collect::<Vec<_>>()
     }
 }
 

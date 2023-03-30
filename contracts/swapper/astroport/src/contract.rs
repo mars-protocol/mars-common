@@ -3,10 +3,10 @@ use cw2::set_contract_version;
 use mars_swapper::msgs::{ExecuteMsg, InstantiateMsg, QueryMsg};
 use mars_swapper_base::{ContractResult, SwapBase};
 
-use crate::route::{OsmosisRoute, OsmosisRouteStep};
+use crate::route::{AstroportRoute, AstroportRouteStep};
 
 /// The Osmosis swapper contract inherits logic from the base swapper contract
-pub type OsmosisSwap<'a> = SwapBase<'a, OsmosisRoute, OsmosisRouteStep>;
+pub type AstroportSwap<'a> = SwapBase<'a, AstroportRoute, AstroportRouteStep>;
 
 const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -19,7 +19,7 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> ContractResult<Response> {
     set_contract_version(deps.storage, format!("crates.io:{CONTRACT_NAME}"), CONTRACT_VERSION)?;
-    OsmosisSwap::default().instantiate(deps, msg)
+    AstroportSwap::default().instantiate(deps, msg)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -27,12 +27,12 @@ pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: ExecuteMsg<OsmosisRoute>,
+    msg: ExecuteMsg<AstroportRoute>,
 ) -> ContractResult<Response> {
-    OsmosisSwap::default().execute(deps, env, info, msg)
+    AstroportSwap::default().execute(deps, env, info, msg)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> ContractResult<Binary> {
-    OsmosisSwap::default().query(deps, env, msg)
+    AstroportSwap::default().query(deps, env, msg)
 }

@@ -145,7 +145,7 @@ fn create_pools_and_routes(
     // uosmo -> umars
     map.insert(
         ("uosmo", "umars"),
-        OsmosisRoute(vec![SwapAmountInRoute {
+        OsmosisRoute::from(vec![SwapAmountInRoute {
             pool_id: pool_osmo_mars,
             token_out_denom: "umars".to_string(),
         }]),
@@ -154,7 +154,7 @@ fn create_pools_and_routes(
     // uatom -> uosmo -> umars
     map.insert(
         ("uatom", "umars"),
-        OsmosisRoute(vec![
+        OsmosisRoute::from(vec![
             SwapAmountInRoute {
                 pool_id: pool_atom_osmo,
                 token_out_denom: "uosmo".to_string(),
@@ -169,7 +169,7 @@ fn create_pools_and_routes(
     // uatom -> uosmo -> uusdc
     map.insert(
         ("uatom", "uusdc"),
-        OsmosisRoute(vec![
+        OsmosisRoute::from(vec![
             SwapAmountInRoute {
                 pool_id: pool_atom_osmo,
                 token_out_denom: "uosmo".to_string(),

@@ -54,7 +54,7 @@ fn estimate_swap_one_step() {
         &ExecuteMsg::SetRoute {
             denom_in: "uosmo".to_string(),
             denom_out: "uatom".to_string(),
-            route: OsmosisRoute(vec![SwapAmountInRoute {
+            route: OsmosisRoute::from(vec![SwapAmountInRoute {
                 pool_id: pool_atom_osmo,
                 token_out_denom: "uatom".to_string(),
             }]),
@@ -120,7 +120,7 @@ fn estimate_swap_multi_step() {
         &ExecuteMsg::SetRoute {
             denom_in: "uatom".to_string(),
             denom_out: "umars".to_string(),
-            route: OsmosisRoute(vec![
+            route: OsmosisRoute::from(vec![
                 SwapAmountInRoute {
                     pool_id: pool_atom_osmo,
                     token_out_denom: "uosmo".to_string(),
@@ -141,7 +141,7 @@ fn estimate_swap_multi_step() {
         &ExecuteMsg::SetRoute {
             denom_in: "uatom".to_string(),
             denom_out: "uusdc".to_string(),
-            route: OsmosisRoute(vec![
+            route: OsmosisRoute::from(vec![
                 SwapAmountInRoute {
                     pool_id: pool_atom_osmo,
                     token_out_denom: "uosmo".to_string(),

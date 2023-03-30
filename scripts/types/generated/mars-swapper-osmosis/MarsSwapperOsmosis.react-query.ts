@@ -16,7 +16,7 @@ import {
   Uint128,
   Decimal,
   Addr,
-  SwapAmountInRoute,
+  OsmosisRouteStep,
   Coin,
   QueryMsg,
   EstimateExactInSwapResponse,
