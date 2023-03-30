@@ -14,75 +14,6 @@ use cosmwasm_std::{
 use mars_swapper::msgs::EstimateExactInSwapResponse;
 use mars_swapper_base::{ContractError, ContractResult, Route, RouteStep};
 
-fn simulate_astroport_swap_operations(
-    querier: &QuerierWrapper,
-    pair_addr: &Addr,
-    operations: Vec<SwapOperation>,
-    offer_amount: Uint128,
-) -> ContractResult<Uint128> {
-    let msg = RouterQueryMsg::SimulateSwapOperations {
-        operations,
-        offer_amount,
-    };
-    let res = querier.query_wasm_smart::<SimulateSwapOperationsResponse>(pair_addr, &msg)?;
-    Ok(res.amount)
-}
-
-#[cw_serde]
-pub struct AstroportRouteStep(pub SwapOperation);
-
-impl AstroportRouteStep {
-    fn to_swap_operation(&self) -> SwapOperation {
-        self.0.clone()
-    }
-
-    /// Returns the (offer,ask) denoms of the swap operation
-    fn denoms(&self) -> ContractResult<(String, String)> {
-        let operation = self.to_swap_operation();
-        match operation {
-            SwapOperation::NativeSwap {
-                ..
-            } => Err(ContractError::InvalidRoute {
-                reason: "Astroport NativeSwap is not supported".to_string(),
-            }),
-            SwapOperation::AstroSwap {
-                offer_asset_info,
-                ask_asset_info,
-            } => match (offer_asset_info, ask_asset_info) {
-                (
-                    AssetInfo::NativeToken {
-                        denom: offer_denom,
-                    },
-                    AssetInfo::NativeToken {
-                        denom: ask_denom,
-                    },
-                ) => Ok((offer_denom, ask_denom)),
-                _ => Err(ContractError::InvalidRoute {
-                    reason: "Cw20 tokens are not supported".to_string(),
-                }),
-            },
-        }
-    }
-}
-
-impl RouteStep for AstroportRouteStep {
-    fn denom_out(&self) -> ContractResult<String> {
-        Ok(self.denoms()?.1)
-    }
-
-    fn validate(&self, _querier: &QuerierWrapper, denom_in: &str) -> ContractResult<()> {
-        // Checks that the swap operation only contains native tokens
-        let denoms = self.denoms()?;
-        if denoms.0 != denom_in {
-            return Err(ContractError::InvalidRoute {
-                reason: format!("Swap operation does not contain input denom {}", denom_in,),
-            });
-        }
-
-        Ok(())
-    }
-}
-
 #[cw_serde]
 pub struct AstroportRoute {
     router: Addr,
@@ -162,4 +93,73 @@ impl Route<AstroportRouteStep> for AstroportRoute {
     fn steps(&self) -> &[AstroportRouteStep] {
         &self.steps
     }
+}
+
+#[cw_serde]
+pub struct AstroportRouteStep(pub SwapOperation);
+
+impl AstroportRouteStep {
+    fn to_swap_operation(&self) -> SwapOperation {
+        self.0.clone()
+    }
+
+    /// Returns the (offer,ask) denoms of the swap operation
+    fn denoms(&self) -> ContractResult<(String, String)> {
+        let operation = self.to_swap_operation();
+        match operation {
+            SwapOperation::NativeSwap {
+                ..
+            } => Err(ContractError::InvalidRoute {
+                reason: "Astroport NativeSwap is not supported".to_string(),
+            }),
+            SwapOperation::AstroSwap {
+                offer_asset_info,
+                ask_asset_info,
+            } => match (offer_asset_info, ask_asset_info) {
+                (
+                    AssetInfo::NativeToken {
+                        denom: offer_denom,
+                    },
+                    AssetInfo::NativeToken {
+                        denom: ask_denom,
+                    },
+                ) => Ok((offer_denom, ask_denom)),
+                _ => Err(ContractError::InvalidRoute {
+                    reason: "Cw20 tokens are not supported".to_string(),
+                }),
+            },
+        }
+    }
+}
+
+impl RouteStep for AstroportRouteStep {
+    fn denom_out(&self) -> ContractResult<String> {
+        Ok(self.denoms()?.1)
+    }
+
+    fn validate(&self, _querier: &QuerierWrapper, denom_in: &str) -> ContractResult<()> {
+        // Checks that the swap operation only contains native tokens
+        let denoms = self.denoms()?;
+        if denoms.0 != denom_in {
+            return Err(ContractError::InvalidRoute {
+                reason: format!("Swap operation does not contain input denom {}", denom_in,),
+            });
+        }
+
+        Ok(())
+    }
+}
+
+fn simulate_astroport_swap_operations(
+    querier: &QuerierWrapper,
+    pair_addr: &Addr,
+    operations: Vec<SwapOperation>,
+    offer_amount: Uint128,
+) -> ContractResult<Uint128> {
+    let msg = RouterQueryMsg::SimulateSwapOperations {
+        operations,
+        offer_amount,
+    };
+    let res = querier.query_wasm_smart::<SimulateSwapOperationsResponse>(pair_addr, &msg)?;
+    Ok(res.amount)
 }
