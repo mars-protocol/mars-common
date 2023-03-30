@@ -42,8 +42,8 @@ impl OsmosisRouteStep {
         let pool = query_pool(querier, self.0.pool_id)?;
         Ok(pool
             .pool_assets
-            .iter()
-            .flat_map(|asset| asset.token.clone())
+            .into_iter()
+            .flat_map(|asset| asset.token)
             .map(|token| {
                 let amount = token.amount;
                 let denom = token.denom;
