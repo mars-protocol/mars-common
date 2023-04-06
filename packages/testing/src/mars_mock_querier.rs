@@ -5,7 +5,11 @@ use cosmwasm_std::{
     SystemResult, WasmQuery,
 };
 use mars_oracle as oracle;
-use mars_oracle_osmosis::DowntimeDetector;
+use mars_oracle_osmosis::{
+    stride,
+    stride::{Price, RedemptionRateResponse},
+    DowntimeDetector,
+};
 use mars_osmosis::helpers::QueryPoolResponse;
 use osmosis_std::types::osmosis::{
     downtimedetector::v1beta1::RecoveredSinceDowntimeOfLengthResponse,
@@ -18,6 +22,7 @@ use crate::{
     oracle_querier::OracleQuerier,
     osmosis_querier::{OsmosisQuerier, PriceKey},
     pyth_querier::PythQuerier,
+    redemption_rate_querier::RedemptionRateQuerier,
 };
 
 pub struct MarsMockQuerier {
@@ -25,6 +30,7 @@ pub struct MarsMockQuerier {
     oracle_querier: OracleQuerier,
     osmosis_querier: OsmosisQuerier,
     pyth_querier: PythQuerier,
+    redemption_rate_querier: RedemptionRateQuerier,
 }
 
 impl Querier for MarsMockQuerier {
@@ -50,6 +56,7 @@ impl MarsMockQuerier {
             oracle_querier: OracleQuerier::default(),
             osmosis_querier: OsmosisQuerier::default(),
             pyth_querier: PythQuerier::default(),
+            redemption_rate_querier: Default::default(),
         }
     }
 
@@ -125,6 +132,19 @@ impl MarsMockQuerier {
         self.pyth_querier.prices.insert(id, price);
     }
 
+    pub fn set_redemption_rate(
+        &mut self,
+        denom: &str,
+        base_denom: &str,
+        redemption_rate: RedemptionRateResponse,
+    ) {
+        let price_key = Price {
+            denom: denom.to_string(),
+            base_denom: base_denom.to_string(),
+        };
+        self.redemption_rate_querier.redemption_rates.insert(price_key, redemption_rate);
+    }
+
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
         match &request {
             QueryRequest::Wasm(WasmQuery::Smart {
@@ -142,6 +162,11 @@ impl MarsMockQuerier {
                 // Pyth Queries
                 if let Ok(pyth_query) = from_binary::<pyth_sdk_cw::QueryMsg>(msg) {
                     return self.pyth_querier.handle_query(&contract_addr, pyth_query);
+                }
+
+                // Redemption Rate Queries
+                if let Ok(redemption_rate_req) = from_binary::<stride::RedemptionRateRequest>(msg) {
+                    return self.redemption_rate_querier.handle_query(redemption_rate_req);
                 }
 
                 panic!("[mock]: Unsupported wasm query: {msg:?}");
