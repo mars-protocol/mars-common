@@ -1,5 +1,5 @@
 {
-  "contract_name": "mars-oracle-osmosis",
+  "contract_name": "mars-oracle-wasm",
   "contract_version": "1.0.1",
   "idl_version": "1.0.0",
   "instantiate": {
@@ -19,7 +19,7 @@
         "description": "Custom init params",
         "anyOf": [
           {
-            "$ref": "#/definitions/Empty"
+            "$ref": "#/definitions/WasmOracleCustomInitParams"
           },
           {
             "type": "null"
@@ -33,9 +33,18 @@
     },
     "additionalProperties": false,
     "definitions": {
-      "Empty": {
-        "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
-        "type": "object"
+      "WasmOracleCustomInitParams": {
+        "type": "object",
+        "required": [
+          "astroport_factory"
+        ],
+        "properties": {
+          "astroport_factory": {
+            "description": "The Astroport factory contract address",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
       }
     }
   },
@@ -61,7 +70,7 @@
                 "type": "string"
               },
               "price_source": {
-                "$ref": "#/definitions/OsmosisPriceSource"
+                "$ref": "#/definitions/WasmPriceSource_for_String"
               }
             },
             "additionalProperties": false
@@ -110,260 +119,6 @@
         "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
         "type": "string"
       },
-      "Downtime": {
-        "description": "Copied from https://github.com/osmosis-labs/osmosis-rust/blob/main/packages/osmosis-std/src/types/osmosis/downtimedetector/v1beta1.rs#L4\n\nIt doesn't impl Serialize, Deserialize, and JsonSchema traits, and therefore cannot be used in contract APIs (messages and query responses).\n\nTODO: Make a PR to osmosis-rust that implements these traits for enum types. Once merged, remove this one here.",
-        "type": "string",
-        "enum": [
-          "duration30s",
-          "duration1m",
-          "duration2m",
-          "duration3m",
-          "duration4m",
-          "duration5m",
-          "duration10m",
-          "duration20m",
-          "duration30m",
-          "duration40m",
-          "duration50m",
-          "duration1h",
-          "duration15h",
-          "duration2h",
-          "duration25h",
-          "duration3h",
-          "duration4h",
-          "duration5h",
-          "duration6h",
-          "duration9h",
-          "duration12h",
-          "duration18h",
-          "duration24h",
-          "duration36h",
-          "duration48h"
-        ]
-      },
-      "DowntimeDetector": {
-        "type": "object",
-        "required": [
-          "downtime",
-          "recovery"
-        ],
-        "properties": {
-          "downtime": {
-            "description": "Downtime period options that you can query, to be: 30seconds, 1 min, 2 min, 3 min, 4 min, 5 min, 10 min, 20 min, 30 min, 40 min, 50 min, 1 hr, 1.5hr, 2 hr, 2.5 hr, 3 hr, 4 hr, 5 hr, 6 hr, 9hr, 12hr, 18hr, 24hr, 36hr, 48hr.",
-            "allOf": [
-              {
-                "$ref": "#/definitions/Downtime"
-              }
-            ]
-          },
-          "recovery": {
-            "description": "Recovery seconds since the chain has been down for downtime period.",
-            "type": "integer",
-            "format": "uint64",
-            "minimum": 0.0
-          }
-        }
-      },
-      "OsmosisPriceSource": {
-        "oneOf": [
-          {
-            "description": "Returns a fixed value;",
-            "type": "object",
-            "required": [
-              "fixed"
-            ],
-            "properties": {
-              "fixed": {
-                "type": "object",
-                "required": [
-                  "price"
-                ],
-                "properties": {
-                  "price": {
-                    "$ref": "#/definitions/Decimal"
-                  }
-                }
-              }
-            },
-            "additionalProperties": false
-          },
-          {
-            "description": "Osmosis spot price quoted in OSMO\n\nNOTE: `pool_id` must point to an Osmosis pool consists of the asset of interest and OSMO",
-            "type": "object",
-            "required": [
-              "spot"
-            ],
-            "properties": {
-              "spot": {
-                "type": "object",
-                "required": [
-                  "pool_id"
-                ],
-                "properties": {
-                  "pool_id": {
-                    "type": "integer",
-                    "format": "uint64",
-                    "minimum": 0.0
-                  }
-                }
-              }
-            },
-            "additionalProperties": false
-          },
-          {
-            "description": "Osmosis arithmetic twap price quoted in OSMO\n\nNOTE: `pool_id` must point to an Osmosis pool consists of the asset of interest and OSMO",
-            "type": "object",
-            "required": [
-              "arithmetic_twap"
-            ],
-            "properties": {
-              "arithmetic_twap": {
-                "type": "object",
-                "required": [
-                  "pool_id",
-                  "window_size"
-                ],
-                "properties": {
-                  "downtime_detector": {
-                    "description": "Detect when the chain is recovering from downtime",
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/DowntimeDetector"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "pool_id": {
-                    "type": "integer",
-                    "format": "uint64",
-                    "minimum": 0.0
-                  },
-                  "window_size": {
-                    "description": "Window size in seconds representing the entire window for which 'average' price is calculated. Value should be <= 172800 sec (48 hours).",
-                    "type": "integer",
-                    "format": "uint64",
-                    "minimum": 0.0
-                  }
-                }
-              }
-            },
-            "additionalProperties": false
-          },
-          {
-            "description": "Osmosis geometric twap price quoted in OSMO\n\nNOTE: `pool_id` must point to an Osmosis pool consists of the asset of interest and OSMO",
-            "type": "object",
-            "required": [
-              "geometric_twap"
-            ],
-            "properties": {
-              "geometric_twap": {
-                "type": "object",
-                "required": [
-                  "pool_id",
-                  "window_size"
-                ],
-                "properties": {
-                  "downtime_detector": {
-                    "description": "Detect when the chain is recovering from downtime",
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/DowntimeDetector"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "pool_id": {
-                    "type": "integer",
-                    "format": "uint64",
-                    "minimum": 0.0
-                  },
-                  "window_size": {
-                    "description": "Window size in seconds representing the entire window for which 'geometric' price is calculated. Value should be <= 172800 sec (48 hours).",
-                    "type": "integer",
-                    "format": "uint64",
-                    "minimum": 0.0
-                  }
-                }
-              }
-            },
-            "additionalProperties": false
-          },
-          {
-            "description": "Osmosis LP token (of an XYK pool) price quoted in OSMO",
-            "type": "object",
-            "required": [
-              "xyk_liquidity_token"
-            ],
-            "properties": {
-              "xyk_liquidity_token": {
-                "type": "object",
-                "required": [
-                  "pool_id"
-                ],
-                "properties": {
-                  "pool_id": {
-                    "type": "integer",
-                    "format": "uint64",
-                    "minimum": 0.0
-                  }
-                }
-              }
-            },
-            "additionalProperties": false
-          },
-          {
-            "description": "Osmosis geometric twap price quoted in OSMO for staked asset.\n\nEquation to calculate the price: stAsset/OSMO = stAsset/Asset * Asset/OSMO\n\nExample: stATOM/OSMO = stATOM/ATOM * ATOM/OSMO where: - stATOM/ATOM price calculated using the geometric TWAP from the stATOM/ATOM pool. - ATOM/OSMO price comes from the Mars Oracle contract.\n\nNOTE: `pool_id` must point to stAsset/Asset Osmosis pool. Asset/OSMO price source should be available in the Mars Oracle contract.",
-            "type": "object",
-            "required": [
-              "staked_geometric_twap"
-            ],
-            "properties": {
-              "staked_geometric_twap": {
-                "type": "object",
-                "required": [
-                  "pool_id",
-                  "transitive_denom",
-                  "window_size"
-                ],
-                "properties": {
-                  "downtime_detector": {
-                    "description": "Detect when the chain is recovering from downtime",
-                    "anyOf": [
-                      {
-                        "$ref": "#/definitions/DowntimeDetector"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  },
-                  "pool_id": {
-                    "description": "Pool id for stAsset/Asset pool",
-                    "type": "integer",
-                    "format": "uint64",
-                    "minimum": 0.0
-                  },
-                  "transitive_denom": {
-                    "description": "Transitive denom for which we query price in OSMO. It refers to 'Asset' in the equation: stAsset/OSMO = stAsset/Asset * Asset/OSMO",
-                    "type": "string"
-                  },
-                  "window_size": {
-                    "description": "Window size in seconds representing the entire window for which 'geometric' price is calculated. Value should be <= 172800 sec (48 hours).",
-                    "type": "integer",
-                    "format": "uint64",
-                    "minimum": 0.0
-                  }
-                }
-              }
-            },
-            "additionalProperties": false
-          }
-        ]
-      },
       "OwnerUpdate": {
         "oneOf": [
           {
@@ -408,6 +163,108 @@
             "enum": [
               "abolish_owner_role"
             ]
+          }
+        ]
+      },
+      "WasmPriceSource_for_String": {
+        "oneOf": [
+          {
+            "description": "Returns a fixed value;",
+            "type": "object",
+            "required": [
+              "fixed"
+            ],
+            "properties": {
+              "fixed": {
+                "type": "object",
+                "required": [
+                  "price"
+                ],
+                "properties": {
+                  "price": {
+                    "$ref": "#/definitions/Decimal"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Astroport spot price",
+            "type": "object",
+            "required": [
+              "astroport_spot"
+            ],
+            "properties": {
+              "astroport_spot": {
+                "type": "object",
+                "required": [
+                  "pair_address",
+                  "route_assets"
+                ],
+                "properties": {
+                  "pair_address": {
+                    "description": "Address of the Astroport pair",
+                    "type": "string"
+                  },
+                  "route_assets": {
+                    "description": "Other assets to route through when calculating the price. E.g. if the pair is USDC/ETH and `config.base_denom` is USD, and we want to get the price of ETH in USD, then `route_assets` could be `[\"USDC\"]`, which would mean we would get the price of ETH in USDC, and then multiply by the price of USDC in USD.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "description": "Astroport TWAP price\n\nWhen calculating the  average price, we take the most recent TWAP snapshot and find a second snapshot in the range of window_size +/- tolerance. For example, if window_size is 5 minutes and tolerance is 1 minute, we look for snapshots that are 4 - 6 minutes back in time from the most recent snapshot.\n\nIf there are multiple snapshots within the range, we take the one that is closest to the desired window size.",
+            "type": "object",
+            "required": [
+              "astroport_twap"
+            ],
+            "properties": {
+              "astroport_twap": {
+                "type": "object",
+                "required": [
+                  "pair_address",
+                  "route_assets",
+                  "tolerance",
+                  "window_size"
+                ],
+                "properties": {
+                  "pair_address": {
+                    "description": "Address of the Astroport pair",
+                    "type": "string"
+                  },
+                  "route_assets": {
+                    "description": "Other assets to route through when calculating the price. E.g. if the pair is USDC/ETH and `config.base_denom` is USD, and we want to get the price of ETH in USD, then `route_assets` could be `[\"USDC\"]`, which would mean we would get the price of ETH in USDC, and then multiply by the price of USDC in USD.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "tolerance": {
+                    "description": "The tolerance in seconds for the sliding TWAP window.",
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  },
+                  "window_size": {
+                    "description": "The size of the sliding TWAP window in seconds.",
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0.0
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
           }
         ]
       }

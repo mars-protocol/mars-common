@@ -8,7 +8,7 @@ use cw_it::{
     robot::TestRobot,
     test_tube::{
         osmosis_std::types::cosmwasm::wasm::v1::MsgExecuteContractResponse, Account, Module,
-        RunnerExecuteResult, RunnerResult, SigningAccount, Wasm,
+        RunnerExecuteResult, SigningAccount, Wasm,
     },
     Artifact, ContractMap, ContractType, TestRunner,
 };

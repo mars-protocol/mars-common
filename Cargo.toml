@@ -56,16 +56,16 @@ mars-oracle-osmosis = { version = "1.0.0", path = "contracts/oracle/osmosis" }
 mars-oracle-wasm    = { version = "1.0.0", path = "contracts/oracle/wasm" }
 
 # dev dependencies
-# cw-it = { git = "https://github.com/apollodao/cw-it.git", rev = "4e8a2e24c820464c1a36ac426067dab828910268", features = [
-#     "astroport",
-#     "astroport-multi-test",
-#     "osmosis-test-tube",
-# ] }
-cw-it = { path = "../cw-it", features = [
+cw-it = { git = "https://github.com/apollodao/cw-it.git", rev = "abd73b7323e18643a4d88949b45328affb4a00a4", features = [
   "astroport",
   "astroport-multi-test",
   "osmosis-test-tube",
 ] }
+# cw-it = { path = "../cw-it", features = [
+#   "astroport",
+#   "astroport-multi-test",
+#   "osmosis-test-tube",
+# ] }
 
 [profile.release]
 codegen-units    = 1

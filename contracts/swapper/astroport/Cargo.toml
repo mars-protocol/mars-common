@@ -38,9 +38,5 @@ osmosis-test-tube = { workspace = true }
 #     "osmosis-test-tube",
 # ] }
 mars-testing = { workspace = true }
-cw-it = { path = "../../../../cw-it", features = [
-    "astroport",
-    "astroport-multi-test",
-    "osmosis-test-tube",
-] }
+cw-it = { workspace = true }
 test-case = "3.0.0"

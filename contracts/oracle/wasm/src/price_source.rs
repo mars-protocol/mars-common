@@ -4,6 +4,7 @@ use astroport::{
     asset::AssetInfo,
     querier::{query_token_precision, simulate},
 };
+use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Decimal, Deps, Empty, Env, Uint128};
 use cw_storage_plus::Map;
 use mars_oracle_base::{
@@ -11,16 +12,12 @@ use mars_oracle_base::{
     ContractResult, PriceSourceChecked, PriceSourceUnchecked,
 };
 
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
-
-use crate::helpers::{
-    assert_astroport_pair_contains_denoms, astro_native_asset, query_astroport_pair_info,
+use crate::{
+    helpers::{astro_native_asset, validate_route_assets},
+    state::ASTROPORT_FACTORY,
 };
-use crate::state::ASTROPORT_FACTORY;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[cw_serde]
 pub enum WasmPriceSource<A> {
     /// Returns a fixed value;
     Fixed {
@@ -110,36 +107,14 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                 pair_address,
                 route_assets,
             } => {
-                // For all route assets, there must be a price source available
-                for asset in &route_assets {
-                    price_sources.load(deps.storage, asset).map_err(|_| {
-                        ContractError::InvalidPriceSource {
-                            reason: format!("No price source found for asset {}", asset),
-                        }
-                    })?;
-                }
-
-                // If there are no route assets, then the pair must contain the denom and base denom.
-                if route_assets.is_empty() {
-                    let pair_info = query_astroport_pair_info(&deps.querier, &pair_address)?;
-                    assert_astroport_pair_contains_denoms(&pair_info, &[denom, base_denom])?;
-                } else {
-                    // If there are route assets, the pair must contain the denom and the first
-                    // route asset, and the last route asset must be the base denom.
-                    let pair_info = query_astroport_pair_info(&deps.querier, &pair_address)?;
-                    assert_astroport_pair_contains_denoms(&pair_info, &[denom, &route_assets[0]])?;
-
-                    // TODO: Is this necessary? As 1 base_denom = 1 base_denom
-                    if route_assets.last().unwrap() != base_denom {
-                        return Err(ContractError::InvalidPriceSource {
-                            reason: format!(
-                                "Last route asset {} must be the base denom {}",
-                                route_assets.last().unwrap(),
-                                base_denom
-                            ),
-                        });
-                    }
-                }
+                validate_route_assets(
+                    &deps,
+                    denom,
+                    base_denom,
+                    price_sources,
+                    &pair_address,
+                    &route_assets,
+                )?;
 
                 Ok(WasmPriceSourceChecked::AstroportSpot {
                     pair_address: deps.api.addr_validate(&pair_address)?,
@@ -152,10 +127,19 @@ impl PriceSourceUnchecked<WasmPriceSourceChecked, Empty> for WasmPriceSourceUnch
                 tolerance,
                 route_assets,
             } => {
-                let pair_info = query_astroport_pair_info(&deps.querier, pair_address)?;
-                assert_astroport_pair_contains_denoms(&pair_info, &[denom, base_denom])?;
+                validate_route_assets(
+                    &deps,
+                    denom,
+                    base_denom,
+                    price_sources,
+                    &pair_address,
+                    &route_assets,
+                )?;
+
+                //TODO: Validate window_size and tolerance?
+
                 Ok(WasmPriceSourceChecked::AstroportTwap {
-                    pair_address: pair_info.contract_addr,
+                    pair_address: deps.api.addr_validate(&pair_address)?,
                     window_size,
                     tolerance,
                     route_assets,
@@ -173,9 +157,9 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
     fn query_price(
         &self,
         deps: &Deps,
-        env: &Env,
+        _env: &Env,
         denom: &str,
-        base_denom: &str,
+        _base_denom: &str,
         price_sources: &Map<&str, Self>,
     ) -> ContractResult<Decimal> {
         match self {
@@ -198,7 +182,7 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                 )?;
                 let one = Uint128::new(10_u128.pow(p.into()));
 
-                // Simulate a swap with one unit to get the price. We can't just divide the pools reserve,
+                // Simulate a swap with one unit to get the price. We can't just divide the pools reserves,
                 // because that only works for XYK pairs.
                 let sim_res =
                     simulate(&deps.querier, pair_address, &astro_native_asset(denom, one))?;
@@ -214,7 +198,7 @@ impl PriceSourceChecked<Empty> for WasmPriceSourceChecked {
                         }
                     })?;
                     let route_price =
-                        price_source.query_price(deps, env, denom, base_denom, price_sources)?;
+                        price_source.query_price(deps, _env, denom, _base_denom, price_sources)?;
                     price *= route_price;
                 }
 

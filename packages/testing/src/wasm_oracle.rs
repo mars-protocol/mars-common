@@ -1,10 +1,11 @@
-use cosmwasm_std::{Decimal, Empty};
+use astroport::{factory::PairType, pair::StablePoolParams};
+use cosmwasm_std::{to_binary, Binary, Decimal, Empty};
 use cw_it::{
     astroport::{robot::AstroportTestRobot, utils::AstroportContracts},
     multi_test::MultiTestRunner,
-    osmosis_test_tube::{Account, Module, OsmosisTestApp, SigningAccount, Wasm},
     robot::TestRobot,
-    Artifact, ContractMap, ContractType, TestRunner,
+    test_tube::{Account, Module, SigningAccount, Wasm},
+    ContractMap, ContractType, TestRunner,
 };
 use mars_oracle::{InstantiateMsg, WasmOracleCustomInitParams};
 use mars_oracle_wasm::WasmPriceSourceUnchecked;
@@ -214,9 +215,10 @@ impl<'a> AstroportTestRobot<'a, TestRunner<'a>> for WasmOracleTestRobot<'a> {
     }
 }
 
-/// Creates an OsmosisTestApp TestRunner
+/// Creates a test runner with the type defined by the TEST_RUNNER environment variable
 pub fn get_test_runner<'a>() -> TestRunner<'a> {
     match TEST_RUNNER.unwrap_or(DEFAULT_TEST_RUNNER) {
+        #[cfg(feature = "osmosis-test-app")]
         "osmosis-test-tube" => {
             let app = OsmosisTestApp::new();
             TestRunner::OsmosisTestApp(app)
@@ -237,11 +239,15 @@ pub fn setup_test<'a>(
     robot
 }
 
+/// Returns a HashMap of contracts to be used in the tests
 pub fn get_contracts(runner: &TestRunner) -> ContractMap {
+    // Get Astroport contracts
     let mut contracts =
         cw_it::astroport::utils::get_local_contracts(runner, &ASTRO_ARTIFACTS_PATH, false, &None);
 
+    // Get Oracle contract
     let contract = match runner {
+        #[cfg(feature = "osmosis-test-app")]
         TestRunner::OsmosisTestApp(_) => {
             let oracle_wasm_path = if APPEND_ARCH {
                 format!(
@@ -264,8 +270,27 @@ pub fn get_contracts(runner: &TestRunner) -> ContractMap {
         }
         _ => panic!("Unsupported test runner type"),
     };
-
-    contracts.insert(CONTRACT_NAME.to_string(), contract);
+    contracts.insert("mars-oracle-wasm".to_string(), contract);
 
     contracts
+}
+
+/// Returns some default pair initialization params for the given pair type
+pub fn astro_init_params(pair_type: &PairType) -> Option<Binary> {
+    match pair_type {
+        PairType::Xyk {} => None,
+        PairType::Stable {} => Some(
+            to_binary(&StablePoolParams {
+                amp: 10,
+            })
+            .unwrap(),
+        ),
+        _ => panic!("Unsupported pair type"),
+    }
+}
+
+pub const fn fixed_source() -> WasmPriceSourceUnchecked {
+    WasmPriceSourceUnchecked::Fixed {
+        price: Decimal::one(),
+    }
 }
