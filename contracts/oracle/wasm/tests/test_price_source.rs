@@ -1,12 +1,9 @@
 use astroport::{asset::AssetInfo, factory::PairType};
 use cosmwasm_std::{Decimal, Uint128};
-use cw_it::{astroport::robot::AstroportTestRobot, TestRunner};
-
+use cw_it::astroport::robot::AstroportTestRobot;
 use mars_oracle_wasm::WasmPriceSourceUnchecked;
+use mars_testing::wasm_oracle::{get_contracts, get_test_runner, setup_test, WasmOracleTestRobot};
 use test_case::test_case;
-
-mod helpers;
-use helpers::*;
 
 #[test]
 fn test_contract_initialization() {

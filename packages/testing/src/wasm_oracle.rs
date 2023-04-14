@@ -1,4 +1,4 @@
-use cosmwasm_std::{to_binary, Decimal, Empty, WasmMsg};
+use cosmwasm_std::{Decimal, Empty};
 use cw_it::{
     astroport::{robot::AstroportTestRobot, utils::AstroportContracts},
     multi_test::MultiTestRunner,
@@ -9,7 +9,6 @@ use cw_it::{
 use mars_oracle::{InstantiateMsg, WasmOracleCustomInitParams};
 use mars_oracle_wasm::WasmPriceSourceUnchecked;
 use mars_owner::OwnerUpdate;
-use serde::Serialize;
 
 // Base denom to use in tests
 pub const BASE_DENOM: &str = "USD";
@@ -70,7 +69,7 @@ impl<'a> WasmOracleTestRobot<'a> {
             );
 
         // Instantiate Mars Oracle Wasm contract
-        let code_id = code_ids[CONTRACT_NAME];
+        let code_id = code_ids["mars-oracle-wasm"];
         let init_msg = InstantiateMsg::<WasmOracleCustomInitParams> {
             owner: admin_addr.clone(),
             base_denom: base_denom.unwrap_or(BASE_DENOM).to_string(),

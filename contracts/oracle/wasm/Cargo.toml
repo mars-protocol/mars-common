@@ -32,5 +32,7 @@ astroport        = "2.3.1"
 
 [dev-dependencies]
 cosmwasm-schema = { workspace = true }
+mars-testing    = { workspace = true }
+mars-owner      = { workspace = true }
 cw-it           = { workspace = true }
 test-case       = "3.0.0"

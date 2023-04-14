@@ -706,7 +706,6 @@ dependencies = [
 [[package]]
 name = "cw-it"
 version = "0.1.0"
-source = "git+https://github.com/apollodao/cw-it.git?rev=4e8a2e24c820464c1a36ac426067dab828910268#4e8a2e24c820464c1a36ac426067dab828910268"
 dependencies = [
  "anyhow",
  "ap-native-coin-registry 1.0.0 (git+https://github.com/astroport-fi/astroport-core.git?tag=v2.0.0)",
@@ -1682,6 +1681,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-swapper-astroport"
+version = "1.0.1"
+dependencies = [
+ "anyhow",
+ "astroport 2.3.1",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-it",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "mars-oracle",
+ "mars-oracle-wasm",
+ "mars-owner",
+ "mars-swapper",
+ "mars-swapper-base",
+ "mars-testing",
+ "osmosis-test-tube 14.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "test-case",
+]
+
+[[package]]
 name = "mars-swapper-base"
 version = "1.0.1"
 dependencies = [
@@ -1727,10 +1746,13 @@ name = "mars-testing"
 version = "1.0.1"
 dependencies = [
  "cosmwasm-std",
+ "cw-it",
  "cw-multi-test 0.16.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "mars-oracle",
  "mars-oracle-osmosis",
+ "mars-oracle-wasm",
  "mars-osmosis",
+ "mars-owner",
  "osmosis-std 0.14.0",
  "prost 0.11.8",
 ]
