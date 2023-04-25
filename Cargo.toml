@@ -2,7 +2,8 @@
 members = [
   "contracts/swapper/*",
   "contracts/oracle/*",
-  "packages/*"
+  "packages/*",
+  "integration-tests"
 ]
 
 [workspace.package]
@@ -43,16 +44,20 @@ wasm-bindgen       = "0.2.84"
 prost              = { version = "0.11.5", default-features = false, features = ["prost-derive"] }
 
 # packages
-mars-osmosis               = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
-mars-owner                 = "1.0.0"
-mars-swapper               = { path = "packages/mars-swapper" }
-mars-testing               = { path = "packages/testing" }
-mars-oracle                = { path = "packages/mars-oracle" }
+mars-osmosis        = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
+mars-owner          = "1.0.0"
+mars-swapper        = { path = "packages/mars-swapper" }
+mars-testing        = { path = "packages/testing" }
+mars-oracle         = { path = "packages/mars-oracle" }
+mars-red-bank-types = { git = "https://github.com/mars-protocol/red-bank", rev = "73432cb37bee95c5c71ce031890817c9566949c8" }
 
 # contracts
 mars-swapper-base   = { version = "1.0.0", path = "contracts/swapper/base" }
 mars-oracle-base    = { version = "1.0.0", path = "contracts/oracle/base" }
 mars-oracle-osmosis = { version = "1.0.0", path = "contracts/oracle/osmosis" }
+mars-red-bank                  = { git = "https://github.com/mars-protocol/red-bank", rev = "73432cb37bee95c5c71ce031890817c9566949c8" }
+mars-rewards-collector-base    = { git = "https://github.com/mars-protocol/red-bank", rev = "73432cb37bee95c5c71ce031890817c9566949c8" }
+mars-rewards-collector-osmosis = { git = "https://github.com/mars-protocol/red-bank", rev = "73432cb37bee95c5c71ce031890817c9566949c8" }
 
 [profile.release]
 codegen-units    = 1

@@ -871,6 +871,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-health"
+version = "1.0.1"
+source = "git+https://github.com/mars-protocol/red-bank?rev=73432cb37bee95c5c71ce031890817c9566949c8#73432cb37bee95c5c71ce031890817c9566949c8"
+dependencies = [
+ "cosmwasm-std",
+ "mars-red-bank-types",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-integration-tests"
+version = "1.0.1"
+dependencies = [
+ "anyhow",
+ "cosmwasm-std",
+ "cw-multi-test",
+ "mars-oracle-base",
+ "mars-oracle-osmosis",
+ "mars-osmosis 1.0.1 (git+https://github.com/mars-protocol/red-bank?rev=00301d60c38af09d8eb7980355009e2f00c6f41f)",
+ "mars-red-bank",
+ "mars-red-bank-types",
+ "mars-rewards-collector-base",
+ "mars-rewards-collector-osmosis",
+ "osmosis-std 0.14.0",
+ "osmosis-test-tube",
+ "serde",
+]
+
+[[package]]
 name = "mars-oracle"
 version = "1.0.1"
 dependencies = [
@@ -903,7 +932,7 @@ dependencies = [
  "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
  "mars-oracle",
  "mars-oracle-base",
- "mars-osmosis",
+ "mars-osmosis 1.0.1 (git+https://github.com/mars-protocol/red-bank?rev=00301d60c38af09d8eb7980355009e2f00c6f41f)",
  "mars-owner",
  "mars-testing",
  "osmosis-std 0.14.0",
@@ -922,6 +951,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "mars-osmosis"
+version = "1.0.1"
+source = "git+https://github.com/mars-protocol/red-bank?rev=73432cb37bee95c5c71ce031890817c9566949c8#73432cb37bee95c5c71ce031890817c9566949c8"
+dependencies = [
+ "cosmwasm-std",
+ "osmosis-std 0.14.0",
+ "serde",
+]
+
+[[package]]
 name = "mars-owner"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -931,6 +970,66 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "schemars",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-red-bank"
+version = "1.0.1"
+source = "git+https://github.com/mars-protocol/red-bank?rev=73432cb37bee95c5c71ce031890817c9566949c8#73432cb37bee95c5c71ce031890817c9566949c8"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw-utils",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "mars-health",
+ "mars-owner",
+ "mars-red-bank-types",
+ "mars-utils",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-red-bank-types"
+version = "1.0.1"
+source = "git+https://github.com/mars-protocol/red-bank?rev=73432cb37bee95c5c71ce031890817c9566949c8#73432cb37bee95c5c71ce031890817c9566949c8"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "mars-owner",
+ "mars-utils",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-rewards-collector-base"
+version = "1.0.1"
+source = "git+https://github.com/mars-protocol/red-bank?rev=73432cb37bee95c5c71ce031890817c9566949c8#73432cb37bee95c5c71ce031890817c9566949c8"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "mars-owner",
+ "mars-red-bank-types",
+ "mars-utils",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "mars-rewards-collector-osmosis"
+version = "1.0.1"
+source = "git+https://github.com/mars-protocol/red-bank?rev=73432cb37bee95c5c71ce031890817c9566949c8#73432cb37bee95c5c71ce031890817c9566949c8"
+dependencies = [
+ "cosmwasm-std",
+ "cw-storage-plus",
+ "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
+ "mars-osmosis 1.0.1 (git+https://github.com/mars-protocol/red-bank?rev=73432cb37bee95c5c71ce031890817c9566949c8)",
+ "mars-red-bank-types",
+ "mars-rewards-collector-base",
+ "osmosis-std 0.14.0",
+ "schemars",
+ "serde",
  "thiserror",
 ]
 
@@ -976,7 +1075,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
- "mars-osmosis",
+ "mars-osmosis 1.0.1 (git+https://github.com/mars-protocol/red-bank?rev=00301d60c38af09d8eb7980355009e2f00c6f41f)",
  "mars-owner",
  "mars-swapper",
  "mars-swapper-base",
@@ -992,9 +1091,18 @@ dependencies = [
  "cw-multi-test",
  "mars-oracle",
  "mars-oracle-osmosis",
- "mars-osmosis",
+ "mars-osmosis 1.0.1 (git+https://github.com/mars-protocol/red-bank?rev=00301d60c38af09d8eb7980355009e2f00c6f41f)",
  "osmosis-std 0.14.0",
  "prost 0.11.8",
+]
+
+[[package]]
+name = "mars-utils"
+version = "1.0.1"
+source = "git+https://github.com/mars-protocol/red-bank?rev=73432cb37bee95c5c71ce031890817c9566949c8#73432cb37bee95c5c71ce031890817c9566949c8"
+dependencies = [
+ "cosmwasm-std",
+ "thiserror",
 ]
 
 [[package]]
