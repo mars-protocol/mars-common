@@ -1,5 +1,5 @@
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{Addr, Decimal, Empty};
+use cosmwasm_std::{Decimal, Empty};
 use mars_owner::OwnerUpdate;
 
 #[cw_serde]
@@ -8,8 +8,6 @@ pub struct InstantiateMsg<C = Empty> {
     pub owner: String,
     /// The asset in which prices are denominated in
     pub base_denom: String,
-    /// Contract address of Pyth
-    pub pyth_contract_addr: String,
     /// Custom init params
     pub custom_init: Option<C>,
 }
@@ -18,12 +16,6 @@ pub struct InstantiateMsg<C = Empty> {
 pub struct Config {
     /// The asset in which prices are denominated in
     pub base_denom: String,
-}
-
-#[cw_serde]
-pub struct PythConfig {
-    /// Contract address of Pyth
-    pub pyth_contract_addr: Addr,
 }
 
 #[cw_serde]
@@ -44,7 +36,6 @@ pub enum ExecuteMsg<T, C = Empty> {
     /// Update contract config (only callable by owner)
     UpdateConfig {
         base_denom: Option<String>,
-        pyth_contract_addr: Option<String>,
     },
     /// Custom messages defined by the contract
     Custom(C),
@@ -98,8 +89,6 @@ pub struct ConfigResponse {
     pub proposed_new_owner: Option<String>,
     /// The asset in which prices are denominated in
     pub base_denom: String,
-    /// Contract address of Pyth
-    pub pyth_contract_addr: String,
 }
 
 #[cw_serde]

@@ -8,24 +8,36 @@
     "type": "object",
     "required": [
       "base_denom",
-      "owner",
-      "pyth_contract_addr"
+      "owner"
     ],
     "properties": {
       "base_denom": {
         "description": "The asset in which prices are denominated in",
         "type": "string"
       },
+      "custom_init": {
+        "description": "Custom init params",
+        "anyOf": [
+          {
+            "$ref": "#/definitions/Empty"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
       "owner": {
         "description": "The contract's owner, who can update config and price sources",
         "type": "string"
-      },
-      "pyth_contract_addr": {
-        "description": "Contract address of Pyth",
-        "type": "string"
       }
     },
-    "additionalProperties": false
+    "additionalProperties": false,
+    "definitions": {
+      "Empty": {
+        "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
+        "type": "object"
+      }
+    }
   },
   "execute": {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -107,15 +119,22 @@
                   "string",
                   "null"
                 ]
-              },
-              "pyth_contract_addr": {
-                "type": [
-                  "string",
-                  "null"
-                ]
               }
             },
             "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Custom messages defined by the contract",
+        "type": "object",
+        "required": [
+          "custom"
+        ],
+        "properties": {
+          "custom": {
+            "$ref": "#/definitions/Empty"
           }
         },
         "additionalProperties": false
@@ -179,6 +198,10 @@
             "minimum": 0.0
           }
         }
+      },
+      "Empty": {
+        "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
+        "type": "object"
       },
       "GeometricTwap": {
         "type": "object",
@@ -422,10 +445,15 @@
               "pyth": {
                 "type": "object",
                 "required": [
+                  "contract_addr",
                   "max_staleness",
                   "price_feed_id"
                 ],
                 "properties": {
+                  "contract_addr": {
+                    "description": "Contract address of Pyth",
+                    "type": "string"
+                  },
                   "max_staleness": {
                     "description": "The maximum number of seconds since the last price was by an oracle, before rejecting the price as too stale",
                     "type": "integer",
@@ -687,8 +715,7 @@
       "title": "ConfigResponse",
       "type": "object",
       "required": [
-        "base_denom",
-        "pyth_contract_addr"
+        "base_denom"
       ],
       "properties": {
         "base_denom": {
@@ -708,10 +735,6 @@
             "string",
             "null"
           ]
-        },
-        "pyth_contract_addr": {
-          "description": "Contract address of Pyth",
-          "type": "string"
         }
       },
       "additionalProperties": false
