@@ -116,3 +116,14 @@ pub fn assert_hls_lqt_gt_max_ltv(
     }
     Ok(())
 }
+
+pub fn assert_max_lb_gt_min_lb(min_lb: Decimal, max_lb: Decimal) -> Result<(), ValidationError> {
+    if min_lb < max_lb {
+        return Err(ValidationError::InvalidParam {
+            param_name: "max_lb".to_string(),
+            invalid_value: max_lb.to_string(),
+            predicate: format!("> {} (min LB)", min_lb),
+        });
+    }
+    Ok(())
+}
