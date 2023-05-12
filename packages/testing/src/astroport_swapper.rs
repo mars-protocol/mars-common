@@ -94,9 +94,13 @@ impl<'a> AstroportSwapperRobot<'a> {
         oracle_contract: ContractType,
         admin: &SigningAccount,
     ) -> Self {
-        let mut contracts = astroport_contracts;
-        contracts.insert("mars-oracle-wasm".to_string(), oracle_contract);
-        let oracle_robot = WasmOracleTestRobot::new(runner, contracts, admin, Some("usd"));
+        let oracle_robot = WasmOracleTestRobot::new(
+            runner,
+            oracle_contract,
+            astroport_contracts,
+            admin,
+            Some("usd"),
+        );
 
         let swapper_code_id =
             cw_it::helpers::upload_wasm_file(runner, admin, swapper_contract).unwrap();

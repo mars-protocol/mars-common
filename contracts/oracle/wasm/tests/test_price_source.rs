@@ -17,8 +17,9 @@ const DEFAULT_LIQ: [u128; 2] = [10000000000000000000000u128, 1000000000000000000
 use mars_testing::{
     test_runner::get_test_runner,
     wasm_oracle::{
-        fixed_source, get_contracts, setup_test, validate_and_query_astroport_spot_price_source,
-        validate_and_query_astroport_twap_price_source, WasmOracleTestRobot,
+        fixed_source, get_wasm_oracle_contract, setup_test,
+        validate_and_query_astroport_spot_price_source,
+        validate_and_query_astroport_twap_price_source, WasmOracleTestRobot, ASTRO_ARTIFACTS_PATH,
     },
 };
 use test_case::test_case;
@@ -27,8 +28,10 @@ use test_case::test_case;
 fn test_contract_initialization() {
     let runner = get_test_runner();
     let admin = &runner.init_accounts()[0];
-    let contract_map = get_contracts(&runner);
-    let robot = setup_test(&runner, contract_map, admin, Some("USD"));
+    let astroport_contracts =
+        cw_it::astroport::utils::get_local_contracts(&runner, &ASTRO_ARTIFACTS_PATH, false, &None);
+    let oracle = get_wasm_oracle_contract(&runner);
+    let robot = setup_test(&runner, oracle, astroport_contracts, admin, Some("USD"));
 
     let config = robot.query_config();
     assert_eq!(config.base_denom, "USD");
@@ -104,8 +107,10 @@ fn validate_fixed_price_source() {
 fn test_set_price_source_fixed() {
     let runner = get_test_runner();
     let admin = &runner.init_accounts()[0];
-    let contract_map = get_contracts(&runner);
-    let robot = setup_test(&runner, contract_map, admin, None);
+    let astroport_contracts =
+        cw_it::astroport::utils::get_local_contracts(&runner, &ASTRO_ARTIFACTS_PATH, false, &None);
+    let oracle = get_wasm_oracle_contract(&runner);
+    let robot = setup_test(&runner, oracle, astroport_contracts, admin, None);
 
     let price_source = WasmPriceSourceUnchecked::Fixed {
         price: ONE,
@@ -122,7 +127,12 @@ fn test_set_price_source_fixed() {
 fn remove_price_source() {
     let runner = get_test_runner();
     let admin = &runner.init_accounts()[0];
-    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, None);
+
+    let astroport_contracts =
+        cw_it::astroport::utils::get_local_contracts(&runner, &ASTRO_ARTIFACTS_PATH, false, &None);
+    let oracle = get_wasm_oracle_contract(&runner);
+    let robot = WasmOracleTestRobot::new(&runner, oracle, astroport_contracts, admin, None);
+
     let denom = "uusd";
     let price_source = WasmPriceSourceUnchecked::Fixed {
         price: ONE,
@@ -139,7 +149,10 @@ fn remove_price_source() {
 fn test_query_fixed_price() {
     let runner = get_test_runner();
     let admin = &runner.init_accounts()[0];
-    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, None);
+    let astroport_contracts =
+        cw_it::astroport::utils::get_local_contracts(&runner, &ASTRO_ARTIFACTS_PATH, false, &None);
+    let oracle = get_wasm_oracle_contract(&runner);
+    let robot = WasmOracleTestRobot::new(&runner, oracle, astroport_contracts, admin, None);
     let denom = "uusd";
     let price_source = WasmPriceSourceUnchecked::Fixed {
         price: ONE,
@@ -208,7 +221,10 @@ fn test_validate_and_query_astroport_twap_price(
 fn record_twap_snapshots_errors_on_non_twap_price_source() {
     let runner = get_test_runner();
     let admin = &runner.init_accounts()[0];
-    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, None);
+    let astroport_contracts =
+        cw_it::astroport::utils::get_local_contracts(&runner, &ASTRO_ARTIFACTS_PATH, false, &None);
+    let oracle = get_wasm_oracle_contract(&runner);
+    let robot = WasmOracleTestRobot::new(&runner, oracle, astroport_contracts, admin, None);
 
     robot
         .set_price_source("uosmo", fixed_source(ONE), admin)
@@ -219,7 +235,11 @@ fn record_twap_snapshots_errors_on_non_twap_price_source() {
 fn record_twap_snapshot_does_not_save_when_less_than_tolerance_ago() {
     let runner = get_test_runner();
     let admin = &runner.init_accounts()[0];
-    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some("uosmo"));
+    let astroport_contracts =
+        cw_it::astroport::utils::get_local_contracts(&runner, &ASTRO_ARTIFACTS_PATH, false, &None);
+    let oracle = get_wasm_oracle_contract(&runner);
+    let robot =
+        WasmOracleTestRobot::new(&runner, oracle, astroport_contracts, admin, Some("uosmo"));
 
     let (pair_address, _) = robot.create_default_astro_pair(PairType::Xyk {}, admin);
 

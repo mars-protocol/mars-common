@@ -1,5 +1,5 @@
 use astroport::{factory::PairType, pair::StablePoolParams};
-use cosmwasm_std::{to_binary, Binary, Decimal, Empty, Uint128};
+use cosmwasm_std::{to_binary, Addr, Binary, Decimal, Empty, Uint128};
 use cw_it::{
     astroport::{
         robot::AstroportTestRobot,
@@ -39,13 +39,21 @@ pub struct WasmOracleTestRobot<'a> {
 impl<'a> WasmOracleTestRobot<'a> {
     pub fn new(
         runner: &'a TestRunner<'a>,
-        contract_map: ContractMap,
+        oracle: ContractType,
+        astroport_contracts: ContractMap,
         admin: &SigningAccount,
         base_denom: Option<&str>,
     ) -> Self {
         // Upload and instantiate contracts
-        let (astroport_contracts, contract_addr) =
-            Self::upload_and_init_contracts(runner, contract_map, admin, base_denom);
+        let astroport_contracts =
+            Self::upload_and_init_astroport_contracts(runner, astroport_contracts, admin);
+        let contract_addr = Self::upload_and_init_oracle(
+            runner,
+            oracle,
+            &astroport_contracts.factory.address,
+            admin,
+            base_denom,
+        );
 
         Self {
             runner,
@@ -54,14 +62,61 @@ impl<'a> WasmOracleTestRobot<'a> {
         }
     }
 
+    pub fn new_with_astroport(
+        runner: &'a TestRunner<'a>,
+        oracle: ContractType,
+        astroport_contracts: AstroportContracts,
+        admin: &SigningAccount,
+        base_denom: Option<&str>,
+    ) -> Self {
+        // Instantiate Mars Oracle Wasm contract
+
+        let contract_addr = Self::upload_and_init_oracle(
+            runner,
+            oracle,
+            &astroport_contracts.factory.address,
+            admin,
+            base_denom,
+        );
+
+        Self {
+            runner,
+            astroport_contracts,
+            mars_oracle_contract_addr: contract_addr,
+        }
+    }
+
+    pub fn upload_and_init_oracle(
+        runner: &'a TestRunner<'a>,
+        oracle: ContractType,
+        astroport_factory_addr: &str,
+        admin: &SigningAccount,
+        base_denom: Option<&str>,
+    ) -> String {
+        let code_id = runner.store_code(oracle, admin).unwrap();
+
+        let init_msg = InstantiateMsg::<WasmOracleCustomInitParams> {
+            owner: admin.address(),
+            base_denom: base_denom.unwrap_or(BASE_DENOM).to_string(),
+            custom_init: Some(WasmOracleCustomInitParams {
+                astroport_factory: astroport_factory_addr.to_string(),
+            }),
+        };
+        let wasm = Wasm::new(runner);
+        let init_res =
+            wasm.instantiate(code_id, &init_msg, Some(&admin.address()), None, &[], admin).unwrap();
+
+        init_res.data.address
+    }
+
     /// Uploads and instantiates all contracts needed for testing
-    pub fn upload_and_init_contracts(
+    pub fn upload_and_init_astroport_contracts(
         runner: &'a TestRunner<'a>,
         contracts: ContractMap,
         admin: &SigningAccount,
-        base_denom: Option<&str>,
-    ) -> (AstroportContracts, String) {
+    ) -> AstroportContracts {
         let admin_addr = admin.address();
+
         // Upload contracts
         let code_ids = cw_it::helpers::upload_wasm_files(runner, admin, contracts).unwrap();
 
@@ -71,22 +126,7 @@ impl<'a> WasmOracleTestRobot<'a> {
                 runner, admin, &code_ids,
             );
 
-        // Instantiate Mars Oracle Wasm contract
-        let code_id = code_ids[ORACLE_CONTRACT_NAME];
-        let init_msg = InstantiateMsg::<WasmOracleCustomInitParams> {
-            owner: admin_addr.clone(),
-            base_denom: base_denom.unwrap_or(BASE_DENOM).to_string(),
-            custom_init: Some(WasmOracleCustomInitParams {
-                astroport_factory: astroport_contracts.factory.address.clone(),
-            }),
-        };
-        let wasm = Wasm::new(runner);
-        let init_res =
-            wasm.instantiate(code_id, &init_msg, Some(&admin_addr), None, &[], admin).unwrap();
-
-        let contract_addr = init_res.data.address;
-
-        (astroport_contracts, contract_addr)
+        astroport_contracts
     }
 
     pub fn increase_time(&self, seconds: u64) -> &Self {
@@ -287,11 +327,12 @@ impl<'a> AstroportTestRobot<'a, TestRunner<'a>> for WasmOracleTestRobot<'a> {
 /// Creates a test robot, initializes accounts, and uploads and instantiates contracts
 pub fn setup_test<'a>(
     runner: &'a TestRunner<'a>,
-    contract_map: ContractMap,
+    oracle: ContractType,
+    astroport_contracts: ContractMap,
     admin: &SigningAccount,
     base_denom: Option<&str>,
 ) -> WasmOracleTestRobot<'a> {
-    let robot = WasmOracleTestRobot::new(runner, contract_map, admin, base_denom);
+    let robot = WasmOracleTestRobot::new(runner, oracle, astroport_contracts, admin, base_denom);
     robot
 }
 
@@ -317,19 +358,6 @@ pub fn get_wasm_oracle_contract(runner: &TestRunner) -> ContractType {
         )),
         _ => panic!("Unsupported test runner type"),
     }
-}
-
-/// Returns a HashMap of contracts to be used in the tests
-pub fn get_contracts(runner: &TestRunner) -> ContractMap {
-    // Get Astroport contracts
-    let mut contracts =
-        cw_it::astroport::utils::get_local_contracts(runner, &ASTRO_ARTIFACTS_PATH, false, &None);
-
-    // Get Oracle contract
-    let contract = get_wasm_oracle_contract(runner);
-    contracts.insert(ORACLE_CONTRACT_NAME.to_string(), contract);
-
-    contracts
 }
 
 /// Returns some default pair initialization params for the given pair type
@@ -374,7 +402,11 @@ pub fn validate_and_query_astroport_spot_price_source(
 ) {
     let runner = get_test_runner();
     let admin = &runner.init_accounts()[0];
-    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
+    let astroport_contracts =
+        cw_it::astroport::utils::get_local_contracts(&runner, &ASTRO_ARTIFACTS_PATH, false, &None);
+    let oracle = get_wasm_oracle_contract(&runner);
+    let robot =
+        WasmOracleTestRobot::new(&runner, oracle, astroport_contracts, admin, Some(base_denom));
 
     let initial_liq: [Uint128; 2] =
         initial_liq.iter().map(|x| Uint128::from(*x)).collect::<Vec<_>>().try_into().unwrap();
@@ -426,7 +458,11 @@ pub fn validate_and_query_astroport_twap_price_source(
 ) {
     let runner = get_test_runner();
     let admin = &runner.init_accounts()[0];
-    let robot = WasmOracleTestRobot::new(&runner, get_contracts(&runner), admin, Some(base_denom));
+    let astroport_contracts =
+        cw_it::astroport::utils::get_local_contracts(&runner, &ASTRO_ARTIFACTS_PATH, false, &None);
+    let oracle = get_wasm_oracle_contract(&runner);
+    let robot =
+        WasmOracleTestRobot::new(&runner, oracle, astroport_contracts, admin, Some(base_denom));
 
     let initial_liq: [Uint128; 2] =
         initial_liq.iter().map(|x| Uint128::from(*x)).collect::<Vec<_>>().try_into().unwrap();

@@ -50,7 +50,8 @@ test-case          = "3.0.0"
 proptest           = "1.1.0"
 
 # packages
-mars-osmosis        = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
+# mars-osmosis        = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
+mars-osmosis        = { path = "../red-bank/packages/chains/osmosis" }
 mars-red-bank-types = { git = "https://github.com/mars-protocol/red-bank", rev = "00301d60c38af09d8eb7980355009e2f00c6f41f" }
 mars-owner          = "1.0.0"
 mars-swapper        = { path = "packages/mars-swapper" }
