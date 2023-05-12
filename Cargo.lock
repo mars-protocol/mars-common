@@ -889,7 +889,7 @@ dependencies = [
  "cw-multi-test",
  "mars-oracle-base",
  "mars-oracle-osmosis",
- "mars-osmosis 1.0.1 (git+https://github.com/mars-protocol/red-bank?rev=00301d60c38af09d8eb7980355009e2f00c6f41f)",
+ "mars-osmosis",
  "mars-red-bank",
  "mars-red-bank-types",
  "mars-rewards-collector-base",
@@ -932,21 +932,11 @@ dependencies = [
  "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
  "mars-oracle",
  "mars-oracle-base",
- "mars-osmosis 1.0.1 (git+https://github.com/mars-protocol/red-bank?rev=00301d60c38af09d8eb7980355009e2f00c6f41f)",
+ "mars-osmosis",
  "mars-owner",
  "mars-testing",
  "osmosis-std 0.14.0",
  "schemars",
- "serde",
-]
-
-[[package]]
-name = "mars-osmosis"
-version = "1.0.1"
-source = "git+https://github.com/mars-protocol/red-bank?rev=00301d60c38af09d8eb7980355009e2f00c6f41f#00301d60c38af09d8eb7980355009e2f00c6f41f"
-dependencies = [
- "cosmwasm-std",
- "osmosis-std 0.14.0",
  "serde",
 ]
 
@@ -1024,7 +1014,7 @@ dependencies = [
  "cosmwasm-std",
  "cw-storage-plus",
  "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
- "mars-osmosis 1.0.1 (git+https://github.com/mars-protocol/red-bank?rev=73432cb37bee95c5c71ce031890817c9566949c8)",
+ "mars-osmosis",
  "mars-red-bank-types",
  "mars-rewards-collector-base",
  "osmosis-std 0.14.0",
@@ -1075,7 +1065,7 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw2 1.0.1 (git+https://github.com/mars-protocol/cw-plus?rev=4014255)",
- "mars-osmosis 1.0.1 (git+https://github.com/mars-protocol/red-bank?rev=00301d60c38af09d8eb7980355009e2f00c6f41f)",
+ "mars-osmosis",
  "mars-owner",
  "mars-swapper",
  "mars-swapper-base",
@@ -1091,7 +1081,7 @@ dependencies = [
  "cw-multi-test",
  "mars-oracle",
  "mars-oracle-osmosis",
- "mars-osmosis 1.0.1 (git+https://github.com/mars-protocol/red-bank?rev=00301d60c38af09d8eb7980355009e2f00c6f41f)",
+ "mars-osmosis",
  "osmosis-std 0.14.0",
  "prost 0.11.8",
 ]
