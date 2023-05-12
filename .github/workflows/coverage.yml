@@ -34,6 +34,9 @@ jobs:
       - name: Compile workspace
         run: cargo make build
 
+      - name: Download artifacts
+        run: cargo make download-artifacts
+
       - name: Run test coverage
         run: cargo make coverage-lcov
 
