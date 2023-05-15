@@ -4,25 +4,25 @@ use mars_utils::error::ValidationError;
 use crate::{
     error::ContractResult,
     msg::{AssetParamsUpdate, VaultConfigUpdate},
-    state::{ASSET_PARAMS, MAX_CLOSE_FACTOR, OWNER, VAULT_CONFIGS},
+    state::{ASSET_PARAMS, OWNER, TARGET_HEALTH_FACTOR, VAULT_CONFIGS},
 };
 
 pub const CONTRACT_NAME: &str = env!("CARGO_PKG_NAME");
 pub const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
-pub fn update_max_close_factor(
+pub fn update_target_health_factor(
     deps: DepsMut,
     info: MessageInfo,
-    max_close_factor: Decimal,
+    target_health_factor: Decimal,
 ) -> ContractResult<Response> {
     OWNER.assert_owner(deps.storage, &info.sender)?;
 
-    assert_mcf(max_close_factor)?;
-    MAX_CLOSE_FACTOR.save(deps.storage, &max_close_factor)?;
+    assert_thf(target_health_factor)?;
+    TARGET_HEALTH_FACTOR.save(deps.storage, &target_health_factor)?;
 
     let response = Response::new()
-        .add_attribute("action", "update_max_close_factor")
-        .add_attribute("value", max_close_factor.to_string());
+        .add_attribute("action", "update_target_health_factor")
+        .add_attribute("value", target_health_factor.to_string());
 
     Ok(response)
 }
@@ -76,16 +76,15 @@ pub fn update_vault_config(
     Ok(response)
 }
 
-pub fn assert_mcf(param_value: Decimal) -> Result<(), ValidationError> {
-    if !param_value.le(&Decimal::one()) {
-        Err(ValidationError::InvalidParam {
-            param_name: "max-close-factor".to_string(),
-            invalid_value: "max-close-factor".to_string(),
-            predicate: "<= 1".to_string(),
-        })
-    } else {
-        Ok(())
+pub fn assert_thf(thf: Decimal) -> Result<(), ValidationError> {
+    if thf < Decimal::one() {
+        return Err(ValidationError::InvalidParam {
+            param_name: "target_health_factor".to_string(),
+            invalid_value: thf.to_string(),
+            predicate: ">= 1".to_string(),
+        });
     }
+    Ok(())
 }
 
 /// liquidation_threshold should be greater than or equal to max_loan_to_value
@@ -112,17 +111,6 @@ pub fn assert_hls_lqt_gt_max_ltv(
             param_name: "hls_liquidation_threshold".to_string(),
             invalid_value: liq_threshold.to_string(),
             predicate: format!("> {} (hls max LTV)", max_ltv),
-        });
-    }
-    Ok(())
-}
-
-pub fn assert_max_lb_gt_min_lb(min_lb: Decimal, max_lb: Decimal) -> Result<(), ValidationError> {
-    if min_lb < max_lb {
-        return Err(ValidationError::InvalidParam {
-            param_name: "max_lb".to_string(),
-            invalid_value: max_lb.to_string(),
-            predicate: format!("> {} (min LB)", min_lb),
         });
     }
     Ok(())

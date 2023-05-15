@@ -7,7 +7,7 @@ use mars_utils::{
 
 use crate::{
     error::ContractResult,
-    execute::{assert_hls_lqt_gt_max_ltv, assert_lqt_gt_max_ltv, assert_max_lb_gt_min_lb},
+    execute::{assert_hls_lqt_gt_max_ltv, assert_lqt_gt_max_ltv},
     types::hls::HlsParamsBase,
 };
 
@@ -44,15 +44,69 @@ pub struct LiquidationBonus {
 }
 
 impl LiquidationBonus {
-    // FIXME: provide correct validation, ask Risk team?
     pub fn validate(&self) -> Result<(), ValidationError> {
-        decimal_param_lt_one(self.b, "b")?;
-
-        decimal_param_le_one(self.max_lb, "max_lb")?;
+        assert_lb_b_within_range(self.b)?;
+        assert_lb_slope_within_range(self.slope)?;
+        assert_lb_min_lb_within_range(self.min_lb)?;
+        assert_lb_max_lb_within_range(self.max_lb)?;
         assert_max_lb_gt_min_lb(self.min_lb, self.max_lb)?;
-
         Ok(())
     }
+}
+
+fn assert_lb_b_within_range(b: Decimal) -> Result<(), ValidationError> {
+    if b > Decimal::percent(10) {
+        return Err(ValidationError::InvalidParam {
+            param_name: "b".to_string(),
+            invalid_value: b.to_string(),
+            predicate: "[0, 0.1]".to_string(),
+        });
+    }
+    Ok(())
+}
+
+fn assert_lb_slope_within_range(slope: Decimal) -> Result<(), ValidationError> {
+    if slope < Decimal::one() || slope > Decimal::new(Uint128::from(5u8)) {
+        return Err(ValidationError::InvalidParam {
+            param_name: "slope".to_string(),
+            invalid_value: slope.to_string(),
+            predicate: "[1, 5]".to_string(),
+        });
+    }
+    Ok(())
+}
+
+fn assert_lb_min_lb_within_range(min_lb: Decimal) -> Result<(), ValidationError> {
+    if min_lb > Decimal::percent(10) {
+        return Err(ValidationError::InvalidParam {
+            param_name: "min_lb".to_string(),
+            invalid_value: min_lb.to_string(),
+            predicate: "[0, 0.1]".to_string(),
+        });
+    }
+    Ok(())
+}
+
+fn assert_lb_max_lb_within_range(max_lb: Decimal) -> Result<(), ValidationError> {
+    if max_lb < Decimal::percent(5) || max_lb > Decimal::percent(30) {
+        return Err(ValidationError::InvalidParam {
+            param_name: "max_lb".to_string(),
+            invalid_value: max_lb.to_string(),
+            predicate: "[0.05, 0.3]".to_string(),
+        });
+    }
+    Ok(())
+}
+
+fn assert_max_lb_gt_min_lb(min_lb: Decimal, max_lb: Decimal) -> Result<(), ValidationError> {
+    if min_lb > max_lb {
+        return Err(ValidationError::InvalidParam {
+            param_name: "max_lb".to_string(),
+            invalid_value: max_lb.to_string(),
+            predicate: format!("> {} (min LB)", min_lb),
+        });
+    }
+    Ok(())
 }
 
 #[cw_serde]
@@ -96,8 +150,8 @@ impl AssetParamsUnchecked {
         decimal_param_le_one(self.liquidation_threshold, "liquidation_threshold")?;
         assert_lqt_gt_max_ltv(self.max_loan_to_value, self.liquidation_threshold)?;
 
-        // FIXME: add validation for PLF, THF?
         self.liquidation_bonus.validate()?;
+        decimal_param_lt_one(self.protocol_liquidation_fee, "protocol_liquidation_fee")?;
 
         if let Some(hls) = self.credit_manager.hls.as_ref() {
             decimal_param_lt_one(hls.max_loan_to_value, "hls_max_loan_to_value")?;

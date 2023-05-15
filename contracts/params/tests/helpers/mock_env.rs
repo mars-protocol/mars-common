@@ -81,7 +81,7 @@ impl MockEnv {
         self.app.execute_contract(
             sender.clone(),
             self.params_contract.clone(),
-            &ExecuteMsg::UpdateMaxCloseFactor(mcf),
+            &ExecuteMsg::UpdateTargetHealthFactor(mcf),
             &[],
         )
     }
@@ -173,7 +173,7 @@ impl MockEnv {
     pub fn query_max_close_factor(&self) -> Decimal {
         self.app
             .wrap()
-            .query_wasm_smart(self.params_contract.clone(), &QueryMsg::MaxCloseFactor {})
+            .query_wasm_smart(self.params_contract.clone(), &QueryMsg::TargetHealthFactor {})
             .unwrap()
     }
 }
@@ -187,7 +187,7 @@ impl MockEnvBuilder {
             Addr::unchecked("owner"),
             &InstantiateMsg {
                 owner: "owner".to_string(),
-                max_close_factor: self.get_max_close_factor(),
+                target_health_factor: self.get_max_close_factor(),
             },
             &[],
             "mock-params-contract",
