@@ -66,7 +66,7 @@ fn assert_lb_b_within_range(b: Decimal) -> Result<(), ValidationError> {
 }
 
 fn assert_lb_slope_within_range(slope: Decimal) -> Result<(), ValidationError> {
-    if slope < Decimal::one() || slope > Decimal::new(Uint128::from(5u8)) {
+    if slope < Decimal::one() || slope > Decimal::from_ratio(5u8, 1u8) {
         return Err(ValidationError::InvalidParam {
             param_name: "slope".to_string(),
             invalid_value: slope.to_string(),
@@ -118,7 +118,6 @@ pub struct AssetParamsBase<T> {
     pub liquidation_threshold: Decimal,
     pub liquidation_bonus: LiquidationBonus,
     pub protocol_liquidation_fee: Decimal,
-    pub target_health_factor: Decimal,
 }
 
 pub type AssetParams = AssetParamsBase<Addr>;
@@ -137,7 +136,6 @@ impl From<AssetParams> for AssetParamsUnchecked {
             liquidation_threshold: p.liquidation_threshold,
             liquidation_bonus: p.liquidation_bonus,
             protocol_liquidation_fee: p.protocol_liquidation_fee,
-            target_health_factor: p.target_health_factor,
         }
     }
 }
@@ -172,7 +170,6 @@ impl AssetParamsUnchecked {
             liquidation_threshold: self.liquidation_threshold,
             liquidation_bonus: self.liquidation_bonus.clone(),
             protocol_liquidation_fee: self.protocol_liquidation_fee,
-            target_health_factor: self.target_health_factor,
         })
     }
 }
