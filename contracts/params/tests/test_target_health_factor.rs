@@ -35,6 +35,7 @@ fn only_owner_can_update_thf() {
 #[test]
 fn validated_updates() {
     let mut mock = MockEnv::new().build().unwrap();
+
     let res =
         mock.update_target_health_factor(&mock.query_owner(), Decimal::from_str("0.99").unwrap());
     assert_err(
@@ -42,7 +43,18 @@ fn validated_updates() {
         Validation(InvalidParam {
             param_name: "target_health_factor".to_string(),
             invalid_value: "0.99".to_string(),
-            predicate: ">= 1".to_string(),
+            predicate: "[1, 2]".to_string(),
+        }),
+    );
+
+    let res =
+        mock.update_target_health_factor(&mock.query_owner(), Decimal::from_str("2.01").unwrap());
+    assert_err(
+        res,
+        Validation(InvalidParam {
+            param_name: "target_health_factor".to_string(),
+            invalid_value: "2.01".to_string(),
+            predicate: "[1, 2]".to_string(),
         }),
     );
 }

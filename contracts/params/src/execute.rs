@@ -77,11 +77,11 @@ pub fn update_vault_config(
 }
 
 pub fn assert_thf(thf: Decimal) -> Result<(), ValidationError> {
-    if thf < Decimal::one() {
+    if thf < Decimal::one() || thf > Decimal::from_ratio(2u8, 1u8) {
         return Err(ValidationError::InvalidParam {
             param_name: "target_health_factor".to_string(),
             invalid_value: thf.to_string(),
-            predicate: ">= 1".to_string(),
+            predicate: "[1, 2]".to_string(),
         });
     }
     Ok(())
