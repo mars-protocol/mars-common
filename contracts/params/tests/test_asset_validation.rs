@@ -228,7 +228,7 @@ fn protocol_liquidation_fee_less_than_one() {
 fn liquidation_bonus_param_b_out_of_range() {
     let mut mock = MockEnv::new().build().unwrap();
     let mut params = default_asset_params("denom_xyz");
-    params.liquidation_bonus.b = Decimal::from_str("0.101").unwrap();
+    params.liquidation_bonus.starting_lb = Decimal::from_str("0.101").unwrap();
 
     let res = mock.update_asset_params(
         &mock.query_owner(),
@@ -239,7 +239,7 @@ fn liquidation_bonus_param_b_out_of_range() {
     assert_err(
         res,
         Validation(InvalidParam {
-            param_name: "b".to_string(),
+            param_name: "starting_lb".to_string(),
             invalid_value: "0.101".to_string(),
             predicate: "[0, 0.1]".to_string(),
         }),

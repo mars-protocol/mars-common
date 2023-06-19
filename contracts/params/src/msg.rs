@@ -8,8 +8,7 @@ use crate::types::{asset::AssetParamsUnchecked, vault::VaultConfigUnchecked};
 pub struct InstantiateMsg {
     /// Contract's owner
     pub owner: String,
-    /// The THF is a governance defined (and updatable) parameter that determines
-    /// the ideal HF a position should be left at immediately after the position has been liquidated.
+    /// Determines the ideal HF a position should be left at immediately after the position has been liquidated.
     pub target_health_factor: Decimal,
 }
 

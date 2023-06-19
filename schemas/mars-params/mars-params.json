@@ -16,7 +16,7 @@
         "type": "string"
       },
       "target_health_factor": {
-        "description": "The THF is a governance defined (and updatable) parameter that determines the ideal HF a position should be left at immediately after the position has been liquidated.",
+        "description": "Determines the ideal HF a position should be left at immediately after the position has been liquidated.",
         "allOf": [
           {
             "$ref": "#/definitions/Decimal"
@@ -339,23 +339,15 @@
         "additionalProperties": false
       },
       "LiquidationBonus": {
-        "description": "The LB will depend on the Health Factor and a couple other parameters as follows: `Liquidation Bonus = min(b + (slope * (1 - HF)), max_lb*)` `max_lb* = max(min(CR - 1, max_lb), min_lb)` `CR` is the Collateralization Ratio of the position calculated as `CR = Total Assets / Total Debt`.",
+        "description": "The LB will depend on the Health Factor and a couple other parameters as follows: Liquidation Bonus = min( b + (slope * (1 - HF)), max( min(CR - 1, max_lb), min_lb ) )",
         "type": "object",
         "required": [
-          "b",
           "max_lb",
           "min_lb",
-          "slope"
+          "slope",
+          "starting_lb"
         ],
         "properties": {
-          "b": {
-            "description": "Marks the level at which the LB starts when HF drops marginally below 1. If set at 1%, at HF = 0.999 the LB will be 1%. If set at 0%, the LB starts increasing from 0% as the HF drops below 1.",
-            "allOf": [
-              {
-                "$ref": "#/definitions/Decimal"
-              }
-            ]
-          },
           "max_lb": {
             "description": "Maximum LB that can be granted to a liquidator; in other words, the maxLB establishes a ceiling to the LB. This is a precautionary parameter to mitigate liquidated users being over-punished.",
             "allOf": [
@@ -374,6 +366,14 @@
           },
           "slope": {
             "description": "Defines the slope at which the LB increases as the HF decreases. The higher the slope, the faster the LB increases as the HF decreases.",
+            "allOf": [
+              {
+                "$ref": "#/definitions/Decimal"
+              }
+            ]
+          },
+          "starting_lb": {
+            "description": "Marks the level at which the LB starts when HF drops marginally below 1. If set at 1%, at HF = 0.999 the LB will be 1%. If set at 0%, the LB starts increasing from 0% as the HF drops below 1.",
             "allOf": [
               {
                 "$ref": "#/definitions/Decimal"
@@ -845,23 +845,15 @@
           "additionalProperties": false
         },
         "LiquidationBonus": {
-          "description": "The LB will depend on the Health Factor and a couple other parameters as follows: `Liquidation Bonus = min(b + (slope * (1 - HF)), max_lb*)` `max_lb* = max(min(CR - 1, max_lb), min_lb)` `CR` is the Collateralization Ratio of the position calculated as `CR = Total Assets / Total Debt`.",
+          "description": "The LB will depend on the Health Factor and a couple other parameters as follows: Liquidation Bonus = min( b + (slope * (1 - HF)), max( min(CR - 1, max_lb), min_lb ) )",
           "type": "object",
           "required": [
-            "b",
             "max_lb",
             "min_lb",
-            "slope"
+            "slope",
+            "starting_lb"
           ],
           "properties": {
-            "b": {
-              "description": "Marks the level at which the LB starts when HF drops marginally below 1. If set at 1%, at HF = 0.999 the LB will be 1%. If set at 0%, the LB starts increasing from 0% as the HF drops below 1.",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Decimal"
-                }
-              ]
-            },
             "max_lb": {
               "description": "Maximum LB that can be granted to a liquidator; in other words, the maxLB establishes a ceiling to the LB. This is a precautionary parameter to mitigate liquidated users being over-punished.",
               "allOf": [
@@ -880,6 +872,14 @@
             },
             "slope": {
               "description": "Defines the slope at which the LB increases as the HF decreases. The higher the slope, the faster the LB increases as the HF decreases.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Decimal"
+                }
+              ]
+            },
+            "starting_lb": {
+              "description": "Marks the level at which the LB starts when HF drops marginally below 1. If set at 1%, at HF = 0.999 the LB will be 1%. If set at 0%, the LB starts increasing from 0% as the HF drops below 1.",
               "allOf": [
                 {
                   "$ref": "#/definitions/Decimal"
@@ -1199,23 +1199,15 @@
           "additionalProperties": false
         },
         "LiquidationBonus": {
-          "description": "The LB will depend on the Health Factor and a couple other parameters as follows: `Liquidation Bonus = min(b + (slope * (1 - HF)), max_lb*)` `max_lb* = max(min(CR - 1, max_lb), min_lb)` `CR` is the Collateralization Ratio of the position calculated as `CR = Total Assets / Total Debt`.",
+          "description": "The LB will depend on the Health Factor and a couple other parameters as follows: Liquidation Bonus = min( b + (slope * (1 - HF)), max( min(CR - 1, max_lb), min_lb ) )",
           "type": "object",
           "required": [
-            "b",
             "max_lb",
             "min_lb",
-            "slope"
+            "slope",
+            "starting_lb"
           ],
           "properties": {
-            "b": {
-              "description": "Marks the level at which the LB starts when HF drops marginally below 1. If set at 1%, at HF = 0.999 the LB will be 1%. If set at 0%, the LB starts increasing from 0% as the HF drops below 1.",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Decimal"
-                }
-              ]
-            },
             "max_lb": {
               "description": "Maximum LB that can be granted to a liquidator; in other words, the maxLB establishes a ceiling to the LB. This is a precautionary parameter to mitigate liquidated users being over-punished.",
               "allOf": [
@@ -1234,6 +1226,14 @@
             },
             "slope": {
               "description": "Defines the slope at which the LB increases as the HF decreases. The higher the slope, the faster the LB increases as the HF decreases.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Decimal"
+                }
+              ]
+            },
+            "starting_lb": {
+              "description": "Marks the level at which the LB starts when HF drops marginally below 1. If set at 1%, at HF = 0.999 the LB will be 1%. If set at 0%, the LB starts increasing from 0% as the HF drops below 1.",
               "allOf": [
                 {
                   "$ref": "#/definitions/Decimal"

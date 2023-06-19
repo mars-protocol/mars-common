@@ -2,7 +2,7 @@ use cosmwasm_std::{Decimal, DepsMut, MessageInfo, Response};
 use mars_utils::error::ValidationError;
 
 use crate::{
-    error::ContractResult,
+    error::{ContractError, ContractResult},
     msg::{AssetParamsUpdate, VaultConfigUpdate},
     state::{ASSET_PARAMS, OWNER, TARGET_HEALTH_FACTOR, VAULT_CONFIGS},
 };
@@ -76,13 +76,14 @@ pub fn update_vault_config(
     Ok(response)
 }
 
-pub fn assert_thf(thf: Decimal) -> Result<(), ValidationError> {
-    if thf < Decimal::one() || thf > Decimal::from_ratio(2u8, 1u8) {
+pub fn assert_thf(thf: Decimal) -> Result<(), ContractError> {
+    if thf < Decimal::one() || thf > Decimal::from_atomics(2u128, 0u32)? {
         return Err(ValidationError::InvalidParam {
             param_name: "target_health_factor".to_string(),
             invalid_value: thf.to_string(),
             predicate: "[1, 2]".to_string(),
-        });
+        }
+        .into());
     }
     Ok(())
 }

@@ -102,10 +102,10 @@ export interface HlsParamsBaseForString {
   max_loan_to_value: Decimal
 }
 export interface LiquidationBonus {
-  b: Decimal
   max_lb: Decimal
   min_lb: Decimal
   slope: Decimal
+  starting_lb: Decimal
 }
 export interface RedBankSettings {
   borrow_enabled: boolean

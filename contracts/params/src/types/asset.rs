@@ -25,14 +25,18 @@ pub struct RedBankSettings {
 }
 
 /// The LB will depend on the Health Factor and a couple other parameters as follows:
-/// `Liquidation Bonus = min(b + (slope * (1 - HF)), max_lb*)`
-/// `max_lb* = max(min(CR - 1, max_lb), min_lb)`
-/// `CR` is the Collateralization Ratio of the position calculated as `CR = Total Assets / Total Debt`.
+/// Liquidation Bonus = min(
+///     b + (slope * (1 - HF)),
+///     max(
+///         min(CR - 1, max_lb),
+///         min_lb
+///     )
+/// )
 #[cw_serde]
 pub struct LiquidationBonus {
     /// Marks the level at which the LB starts when HF drops marginally below 1.
     /// If set at 1%, at HF = 0.999 the LB will be 1%. If set at 0%, the LB starts increasing from 0% as the HF drops below 1.
-    pub b: Decimal,
+    pub starting_lb: Decimal,
     /// Defines the slope at which the LB increases as the HF decreases.
     /// The higher the slope, the faster the LB increases as the HF decreases.
     pub slope: Decimal,
@@ -45,19 +49,19 @@ pub struct LiquidationBonus {
 
 impl LiquidationBonus {
     pub fn validate(&self) -> Result<(), ValidationError> {
-        assert_lb_b_within_range(self.b)?;
+        assert_starting_lb_within_range(self.starting_lb)?;
         assert_lb_slope_within_range(self.slope)?;
-        assert_lb_min_lb_within_range(self.min_lb)?;
-        assert_lb_max_lb_within_range(self.max_lb)?;
+        assert_min_lb_within_range(self.min_lb)?;
+        assert_max_lb_within_range(self.max_lb)?;
         assert_max_lb_gt_min_lb(self.min_lb, self.max_lb)?;
         Ok(())
     }
 }
 
-fn assert_lb_b_within_range(b: Decimal) -> Result<(), ValidationError> {
+fn assert_starting_lb_within_range(b: Decimal) -> Result<(), ValidationError> {
     if b > Decimal::percent(10) {
         return Err(ValidationError::InvalidParam {
-            param_name: "b".to_string(),
+            param_name: "starting_lb".to_string(),
             invalid_value: b.to_string(),
             predicate: "[0, 0.1]".to_string(),
         });
@@ -76,7 +80,7 @@ fn assert_lb_slope_within_range(slope: Decimal) -> Result<(), ValidationError> {
     Ok(())
 }
 
-fn assert_lb_min_lb_within_range(min_lb: Decimal) -> Result<(), ValidationError> {
+fn assert_min_lb_within_range(min_lb: Decimal) -> Result<(), ValidationError> {
     if min_lb > Decimal::percent(10) {
         return Err(ValidationError::InvalidParam {
             param_name: "min_lb".to_string(),
@@ -87,7 +91,7 @@ fn assert_lb_min_lb_within_range(min_lb: Decimal) -> Result<(), ValidationError>
     Ok(())
 }
 
-fn assert_lb_max_lb_within_range(max_lb: Decimal) -> Result<(), ValidationError> {
+fn assert_max_lb_within_range(max_lb: Decimal) -> Result<(), ValidationError> {
     if max_lb < Decimal::percent(5) || max_lb > Decimal::percent(30) {
         return Err(ValidationError::InvalidParam {
             param_name: "max_lb".to_string(),
